@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module SurveysHelper
   include CourseHelper
 
@@ -8,12 +9,6 @@ module SurveysHelper
     else
       "Survey for #{@course.title} (#{@course.term})"
     end
-  end
-
-  def render_answer_form_helper(answer, form)
-    partial = question_type(answer)
-    render partial: "rapidfire/answers/#{partial}",
-           locals: { f: form, answer: answer, course: @course }
   end
 
   def render_matrix_answer_labels(answer)
@@ -38,14 +33,11 @@ module SurveysHelper
     multiple = answer.question.multiple
     field_name = question_answer_field_name(f, multiple)
     options = answer_options(answer, course).collect { |o| o.is_a?(Array) ? [o[1].tr('_', ' ').to_s, o[0]] : o }
-    if options.empty?
-      content_tag :div, 'remove me', data: { remove_me: true }
-    else
-      select_tag(field_name, options_for_select(options),
-                 include_blank: answer.question.multiple ? 'Select all that apply' : 'Select an option',
-                 required: is_required_question?(answer),
-                 multiple: answer.question.multiple)
-    end
+    return content_tag :div, 'remove me', data: { remove_me: true } if options.empty?
+    select_tag(field_name, options_for_select(options),
+               include_blank: multiple ? 'Select all that apply' : 'Select an option',
+               required: required_question?(answer),
+               multiple: multiple)
   end
 
   def answer_options(answer, course)
@@ -60,13 +52,11 @@ module SurveysHelper
   def course_answer_options(type, course)
     case type
     when 'Students'
-      students = course.courses_users.where(role: CoursesUsers::Roles::STUDENT_ROLE)
-      students.collect { |cu| [cu.user.id, cu.user.username, contribution_link(cu).to_s] }
+      course_student_choices(course)
     when 'Articles'
-      course.articles.collect { |a| [a.id, a.title, "<a href='#{article_url(a)}' target='_blank'>#{a.title}</a>"] }
+      course_article_choices(course)
     when 'WikiEdu Staff'
-      staff = course.courses_users.where(role: CoursesUsers::Roles::WIKI_ED_STAFF_ROLE)
-      staff.collect { |cu| [cu.user.id, cu.user.username, contribution_link(cu).to_s] }
+      course_wikiedu_staff_choices(course)
     end
   end
 
@@ -74,73 +64,30 @@ module SurveysHelper
     current_user&.admin?
   end
 
-  def question_type(answer)
-    question_type_to_string(answer.question)
-  end
-
-  def question_type_to_string(question)
-    question.type.to_s.split('::').last.downcase
-  end
-
-  def is_required_question?(answer)
+  def required_question?(answer)
     answer.question.validation_rules[:presence].to_i == 1
   end
 
-  def is_grouped_question(answer)
-    if answer.nil? || answer.question.nil?
-      false
-    else
-      answer.question.validation_rules[:grouped].to_i == 1
-    end
+  def question_is_grouped?(answer)
+    return false if answer.nil? || answer.question.nil?
+    answer.question.validation_rules[:grouped].to_i == 1
   end
 
   def grouped_question(answer)
     answer.question.validation_rules[:grouped_question]
   end
 
-  def has_follow_up_question(answer)
-    answer.question.follow_up_question_text? && !answer.question.follow_up_question_text.empty?
-  end
-
-  def start_of_group(options = {})
-    answers = options[:answers]
-    index = options[:index]
-    answer = answers[index]
-    return false unless is_grouped_question(answer)
-    return true if index.zero?
-
-    previous_answer = answers[index - 1]
-    return true unless is_grouped_question(previous_answer)
-    return true unless questions_in_same_group?(answer, previous_answer)
-    return false
-  end
-
-  def end_of_group(answer, answer_group_builder, index)
-    return false unless is_grouped_question(answer)
-
-    total_questions = answer_group_builder.answers.length
-    is_last_question = (index + 1 == total_questions)
-    return true if is_last_question
-
-    next_question = answer_group_builder.answers[index + 1]
-    return true unless questions_in_same_group?(answer, next_question)
-
-    return false
-  end
-
-  def question_group_locals(surveys_question_group, index, total, results = false)
+  def question_group_locals(surveys_question_group, index, total, is_results_view:)
     @question_group = surveys_question_group.rapidfire_question_group
     @answer_group_builder = Rapidfire::AnswerGroupBuilder.new(params: {},
                                                               user: current_user,
                                                               question_group: @question_group)
-    return {
-      question_group: @question_group,
-      answer_group_builder: @answer_group_builder,
-      question_group_index: index,
-      surveys_question_group: surveys_question_group,
-      total: total,
-      results: results
-    }
+    return { question_group: @question_group,
+             answer_group_builder: @answer_group_builder,
+             question_group_index: index,
+             surveys_question_group: surveys_question_group,
+             total: total,
+             results: is_results_view }
   end
 
   def question_conditional_string(question)
@@ -160,10 +107,6 @@ module SurveysHelper
     return unless answer.question.conditionals?
     string = strip_tags(answer.question.conditionals).tr(' ', '_').tr("'", "\\'")
     "data-conditional-question=#{string}"
-  end
-
-  def is_radio_type(answer)
-    question_type(answer) == 'radio'
   end
 
   def numeric_min(answer)
@@ -228,12 +171,23 @@ module SurveysHelper
   # Methods called only from this file #
   ######################################
 
-  def course_slug?
-    params.key?(:course_slug)
+  def course_student_choices(course)
+    students = course.courses_users.where(role: CoursesUsers::Roles::STUDENT_ROLE)
+    students.collect { |cu| [cu.user.id, cu.user.username, contribution_link(cu).to_s] }
   end
 
-  def questions_in_same_group?(first, second)
-    return false if first.nil? || second.nil?
-    grouped_question(first) == grouped_question(second)
+  def course_article_choices(course)
+    course.articles.collect do |a|
+      [a.id, a.title, "<a href='#{a.url}' target='_blank'>#{a.title}</a>"]
+    end
+  end
+
+  def course_wikiedu_staff_choices(course)
+    staff = course.courses_users.where(role: CoursesUsers::Roles::WIKI_ED_STAFF_ROLE)
+    staff.collect { |cu| [cu.user.id, cu.user.username, contribution_link(cu).to_s] }
+  end
+
+  def course_slug?
+    params.key?(:course_slug)
   end
 end

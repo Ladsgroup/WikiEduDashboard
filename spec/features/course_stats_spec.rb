@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'course stats', type: :feature, js: true do
@@ -11,7 +12,7 @@ describe 'course stats', type: :feature, js: true do
   let(:views)      { 10 }
   let(:chars)      { 10 }
   let(:student)    { 0 }
-  let(:article)    { create(:article, namespace: 0, views: views) }
+  let(:article)    { create(:article, namespace: 0) }
   let!(:ac)        do
     create(:articles_course, course_id: course.id, article_id: article.id,
                              new_article: true, view_count: views)
@@ -30,10 +31,6 @@ describe 'course stats', type: :feature, js: true do
   let!(:revisions) { [revision, revision2] }
   let(:articles)   { [article] }
   let(:users)      { [user] }
-
-  before do
-    Capybara.current_driver = :poltergeist
-  end
 
   it 'displays statistics about the course' do
     cu.update_cache

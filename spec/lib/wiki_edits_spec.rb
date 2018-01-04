@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 require "#{Rails.root}/lib/wiki_edits"
 
@@ -18,6 +19,7 @@ describe WikiEdits do
            wiki_secret: 'bar')
     create(:user,
            id: 2,
+           username: 'user2',
            wiki_token: 'foo',
            wiki_secret: 'bar')
     create(:courses_user,
@@ -57,6 +59,18 @@ describe WikiEdits do
     expect(User.first.wiki_token).to eq('invalid')
   end
 
+  it 'handles edit requests that are blocked' do
+    stub_edit_failure_blocked
+    expect(BlockedEditsReporter).to receive(:create_alerts_for_blocked_edits)
+    WikiEdits.new.post_whole_page(User.first, 'Foo', 'Bar')
+  end
+
+  it 'handles edit requests that are autoblocked' do
+    stub_edit_failure_autoblocked
+    expect(BlockedEditsReporter).to receive(:create_alerts_for_blocked_edits)
+    WikiEdits.new.post_whole_page(User.first, 'Foo', 'Bar')
+  end
+
   describe '.notify_untrained' do
     it 'posts talk page messages on Wikipedia' do
       stub_oauth_edit
@@ -92,6 +106,18 @@ describe WikiEdits do
     # that the auth is invalid, then we carry on.
     it 'returns true if Wikipedia API returns no tokens' do
       stub_request(:any, /.*/).to_return(status: 200, body: '{}', headers: {})
+      response = WikiEdits.new.oauth_credentials_valid?(User.first)
+      expect(response).to eq(true)
+    end
+
+    it 'returns true if Wikipedia API is down with 503 error' do
+      stub_wikimedia_error(code: 503)
+      response = WikiEdits.new.oauth_credentials_valid?(User.first)
+      expect(response).to eq(true)
+    end
+
+    it 'returns true if Wikipedia is down with 500 error' do
+      stub_wikimedia_error(code: 500)
       response = WikiEdits.new.oauth_credentials_valid?(User.first)
       expect(response).to eq(true)
     end

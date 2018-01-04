@@ -5,6 +5,8 @@
 /node_modules
 /js_coverage
 /vendor/*
+.nyc_output
+.idea/
 
 *.rbc
 capybara-*.html
@@ -44,3 +46,4 @@ npm-debug.log.*
 Session.vim
 1
 .byebug_history
+.ruby-gemset

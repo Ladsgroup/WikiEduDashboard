@@ -1,7 +1,9 @@
 import React from 'react';
-import TransitionGroup from 'react-addons-css-transition-group';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
+import TransitionGroup from 'react-transition-group/CSSTransitionGroup';
 
-import Timeline from './timeline.cjsx';
+import Timeline from './timeline.jsx';
 import Grading from './grading.jsx';
 import Editable from '../high_order/editable.jsx';
 
@@ -28,20 +30,20 @@ const getState = () =>
   })
 ;
 
-const TimelineHandler = React.createClass({
+const TimelineHandler = createReactClass({
   displayName: 'TimelineHandler',
 
   propTypes: {
-    course_id: React.PropTypes.string,
-    course: React.PropTypes.object,
-    current_user: React.PropTypes.object,
-    children: React.PropTypes.node,
-    controls: React.PropTypes.func,
-    weeks: React.PropTypes.array,
-    gradeables: React.PropTypes.array,
-    loading: React.PropTypes.bool,
-    editable_block_ids: React.PropTypes.array,
-    all_training_modules: React.PropTypes.array
+    course_id: PropTypes.string,
+    course: PropTypes.object,
+    current_user: PropTypes.object,
+    children: PropTypes.node,
+    controls: PropTypes.func,
+    weeks: PropTypes.array,
+    gradeables: PropTypes.array,
+    loading: PropTypes.bool,
+    editable_block_ids: PropTypes.array,
+    all_training_modules: PropTypes.array
   },
 
   getInitialState() {
@@ -80,7 +82,7 @@ const TimelineHandler = React.createClass({
 
   render() {
     const meetings = CourseDateUtils.meetings(this.props.course);
-    let weekMeetings = CourseDateUtils.weekMeetings(meetings, this.props.course, this.props.course.day_exceptions);
+    const weekMeetings = CourseDateUtils.weekMeetings(meetings, this.props.course, this.props.course.day_exceptions);
     const openWeeks = CourseDateUtils.openWeeks(weekMeetings);
 
     let outlet;
@@ -108,7 +110,7 @@ const TimelineHandler = React.createClass({
     } else {
       showGrading = true;
     }
-    let grading = showGrading ? <Grading {...this.props} /> : null;
+    const grading = showGrading ? <Grading {...this.props} /> : null;
 
     return (
       <div>

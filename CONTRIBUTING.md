@@ -4,6 +4,7 @@
 
 We love contributions! If you're looking for a way to get involved, contact
 Sage Ross (`ragesoss`).
+You can also join our [IRC Channel](https://webchat.freenode.net/?channels=#wikimedia-ed) ! 
 
 #### Bugs and enhancement issues
 
@@ -18,7 +19,7 @@ Possible improvements that are not bugs per-se — mostly ones that are independ
 * [code quality](https://github.com/WikiEducationFoundation/WikiEduDashboard/issues?q=is%3Aissue+is%3Aopen+label%3A%22code+quality%22) - Developer-facing improvements that make the dashboard easier to work with or otherwise improve the quality of the code-base.
 
 If you're a new developer and you're looking for an easy way to get involved, try one of the bugs tagged as newcomer friendly:
-* [newcomer friendly](https://github.com/WikiEducationFoundation/WikiEduDashboard/issues?q=is%3Aissue+is%3Aopen+label%3A%22newcomer+friendly%22) - These are probably fairly simple to fix, without needing to understand the entire application or make extensive changes. We try to keep a few of these open for "microcontributions" for Outreachy applicants. If you can't find one you like, ask Sage!
+* [newcomer friendly](https://github.com/WikiEducationFoundation/WikiEduDashboard/issues?q=is%3Aissue+is%3Aopen+label%3A%22newcomer+friendly%22) - These range from very simple to moderately complex, but won't require you to understand the entire application or make extensive changes. We try to keep a few of these open for "microcontributions" for Outreachy applicants and others looking for an easy-to-intermediate task. If you can't find one you like, ask Sage!
 
 #### Developer Resources
 
@@ -31,7 +32,7 @@ If you're a new developer and you're looking for an easy way to get involved, tr
 #### Code Style
 This project adheres as strictly as possible to the community [Ruby Style Guide](https://github.com/bbatsov/ruby-style-guide). [Rubocop](https://github.com/bbatsov/rubocop) is used for this purpose and its associated editor integrations are highly recommended for contributors.
 
-The project has a mix of templating and compiled languages, including both erb and haml for Rails templates, and a mix of coffeescript, cjsx, pure javascript, and jsx for the frontend. We're trying to standardize on haml, javascript, and jsx for everything. **Please use haml, javascript, and/or jsx** for new files; erb, coffeescript, and cjsx are deprecated.
+The project has a mix of templating and compiled languages, including both erb and haml for Rails templates, and a mix of pure javascript and jsx for the frontend. We're trying to standardize on haml, javascript, and jsx for everything. **Please use haml, javascript, and/or jsx** for new files; erb, coffeescript, and cjsx are deprecated.
 
 All javascript and jsx files must pass eslint.
 
@@ -57,3 +58,4 @@ Also, ensure that the corresponding schema.rb changes only reflect the new migra
 - Rebase your branch on master if it is behind.
 - Optionally, squash your work into a single commit.
 - If you have added any external libraries via a package manager please ensure that you have updated the proper dependency list (`bower.json`, `package.json`, or `Gemfile`).
+- After opening a PR, verify that the continuous integration tests pass; if not, add more commits to fix them.

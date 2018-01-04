@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'sentimental'
 
 module QuestionResultsHelper
@@ -23,20 +24,10 @@ module QuestionResultsHelper
   end
 
   def question_answers(question)
-    analyzer = Sentimental.new
-    analyzer.load_defaults
-    question.answers.map do |a|
-      course = a.course(@survey.id)
-      campaigns = course.campaigns unless course.nil?
-      tags = course.tags unless course.nil?
-      {
-        data: a,
-        user: a.user,
-        course: course,
-        campaigns: campaigns,
-        tags: tags,
-        sentiment: calculate_sentiment(question, a)
-      }
+    question.answers.map do |answer|
+      course = answer.course(@survey.id)
+      { data: answer, user: answer.user, course: course, campaigns: course&.campaigns,
+        tags: course&.tags, sentiment: calculate_sentiment(question, answer) }
     end
   end
 
@@ -68,5 +59,13 @@ module QuestionResultsHelper
     label = 'Respondents'
     label.pluralize if total > 1
     "#{total} #{label}"
+  end
+
+  ########################################
+  # Helper method used only in this file #
+  ########################################
+
+  def question_type_to_string(question)
+    question.type.to_s.split('::').last.downcase
   end
 end

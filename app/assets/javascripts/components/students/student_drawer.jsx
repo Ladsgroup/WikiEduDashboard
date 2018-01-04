@@ -1,5 +1,6 @@
 import React from 'react';
-import Expandable from '../high_order/expandable.jsx';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import RevisionStore from '../../stores/revision_store.js';
 import TrainingStatusStore from '../../stores/training_status_store.js';
 import TrainingStatus from './training_status.jsx';
@@ -8,12 +9,12 @@ import DiffViewer from '../revisions/diff_viewer.jsx';
 const getRevisions = studentId => RevisionStore.getFiltered({ user_id: studentId });
 const getTrainingStatus = () => TrainingStatusStore.getModels();
 
-const StudentDrawer = React.createClass({
+const StudentDrawer = createReactClass({
   displayName: 'StudentDrawer',
 
   propTypes: {
-    student: React.PropTypes.object,
-    is_open: React.PropTypes.bool
+    student: PropTypes.object,
+    isOpen: PropTypes.bool
   },
 
   mixins: [RevisionStore.mixin, TrainingStatusStore.mixin],
@@ -25,10 +26,6 @@ const StudentDrawer = React.createClass({
     };
   },
 
-  getKey() {
-    return `drawer_${this.props.student.id}`;
-  },
-
   storeDidChange() {
     return this.setState({
       revisions: getRevisions(this.props.student.id),
@@ -37,10 +34,10 @@ const StudentDrawer = React.createClass({
   },
 
   render() {
-    if (!this.props.is_open) { return <tr></tr>; }
+    if (!this.props.isOpen) { return <tr />; }
 
     const revisionsRows = (this.state.revisions || []).map((rev) => {
-      let details = I18n.t('users.revision_characters_and_views', { characters: rev.characters, views: rev.views });
+      const details = I18n.t('users.revision_characters_and_views', { characters: rev.characters, views: rev.views });
       return (
         <tr key={rev.id}>
           <td>
@@ -54,13 +51,13 @@ const StudentDrawer = React.createClass({
           <td className="desktop-only-tc">{rev.characters}</td>
           <td className="desktop-only-tc">{rev.views}</td>
           <td className="desktop-only-tc">
-            <DiffViewer revision={rev} />
+            <DiffViewer revision={rev} editors={[this.props.student]} />
           </td>
         </tr>
       );
     });
 
-    if (this.props.is_open && revisionsRows.length === 0) {
+    if (revisionsRows.length === 0) {
       revisionsRows.push(
         <tr key={`${this.props.student.id}-no-revisions`}>
           <td colSpan="7" className="text-center">
@@ -78,30 +75,26 @@ const StudentDrawer = React.createClass({
       </tr>
     );
 
-    let className = 'drawer';
-    className += !this.props.is_open ? ' closed' : '';
-
     return (
-        <tr className={className}>
-          <td colSpan="7">
-            <TrainingStatus trainingModules={this.state.trainingModules} />
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>{I18n.t('users.contributions')}</th>
-                  <th className="desktop-only-tc">{I18n.t('metrics.date_time')}</th>
-                  <th className="desktop-only-tc">{I18n.t('metrics.char_added')}</th>
-                  <th className="desktop-only-tc">{I18n.t('metrics.view')}</th>
-                  <th className="desktop-only-tc"></th>
-                </tr>
-              </thead>
-              <tbody>{revisionsRows}</tbody>
-            </table>
-          </td>
-        </tr>
+      <tr className="drawer">
+        <td colSpan="7">
+          <TrainingStatus trainingModules={this.state.trainingModules} />
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{I18n.t('users.contributions')}</th>
+                <th className="desktop-only-tc">{I18n.t('metrics.date_time')}</th>
+                <th className="desktop-only-tc">{I18n.t('metrics.char_added')}</th>
+                <th className="desktop-only-tc">{I18n.t('metrics.view')}</th>
+                <th className="desktop-only-tc" />
+              </tr>
+            </thead>
+            <tbody>{revisionsRows}</tbody>
+          </table>
+        </td>
+      </tr>
     );
   }
-}
-);
+});
 
-export default Expandable(StudentDrawer);
+export default StudentDrawer;

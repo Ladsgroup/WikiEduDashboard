@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 require "#{Rails.root}/lib/modified_revisions_manager"
 
 #= Updates articles to reflect deletion and page moves on Wikipedia
 class ArticleStatusManager
   def initialize(wiki = nil)
-    wiki ||= Wiki.default_wiki
-    @wiki = wiki
+    @wiki = wiki || Wiki.default_wiki
   end
 
   ###############
@@ -14,13 +14,27 @@ class ArticleStatusManager
 
   # Queries deleted state and namespace for all articles
   def self.update_article_status
-    Course.current.each do |course|
-      course_articles = course.pages_edited
-      Wiki.all.each do |wiki|
-        articles = course_articles.where(wiki_id: wiki.id)
-        next if articles.empty?
-        new(wiki).update_status(articles)
+    threads = Course.current
+                    .in_groups(Replica::CONCURRENCY_LIMIT, false)
+                    .map.with_index do |course_batch, i|
+      Thread.new(i) do
+        course_batch.each do |course|
+          update_article_status_for_course(course)
+        end
       end
+    end
+    threads.each(&:join)
+  end
+
+  #################
+  # Class helpers #
+  #################
+  def self.update_article_status_for_course(course)
+    course_articles = course.pages_edited
+    Wiki.all.each do |wiki|
+      articles = course_articles.where(wiki_id: wiki.id)
+      next if articles.empty?
+      new(wiki).update_status(articles)
     end
   end
 
@@ -41,8 +55,8 @@ class ArticleStatusManager
     update_article_ids @deleted_page_ids
 
     # Delete and undelete articles as appropriate
-    articles.where(mw_page_id: @deleted_page_ids).update_all(deleted: true)
-    articles.where(mw_page_id: @synced_ids).update_all(deleted: false)
+    update_deleted_articles(articles)
+    update_undeleted_articles(articles)
     ArticlesCourses.where(article_id: @deleted_page_ids).destroy_all
     limbo_revisions = Revision.where(mw_page_id: @deleted_page_ids)
     ModifiedRevisionsManager.new(@wiki).move_or_delete_revisions limbo_revisions
@@ -89,6 +103,19 @@ class ArticleStatusManager
     end
   end
 
+  def update_deleted_articles(articles)
+    return unless @failed_request_count.zero?
+    articles.where(mw_page_id: @deleted_page_ids).each do |article|
+      article.update_attribute(:deleted, true)
+    end
+  end
+
+  def update_undeleted_articles(articles)
+    articles.where(mw_page_id: @synced_ids).each do |article|
+      article.update_attribute(:deleted, false)
+    end
+  end
+
   def data_matches_article?(article_data, article)
     return false unless article.title == article_data['page_title']
     return false unless article.namespace == article_data['page_namespace'].to_i
@@ -97,14 +124,28 @@ class ArticleStatusManager
     true
   end
 
+  # This is limited by the URI length of the combined titles. For most languages,
+  # 100 titles per query is no problem, but languages with unicode titles hit the
+  # URI length limit.
+  # TODO: move the chunking to Replica and set the size dynamically depending on the
+  # length of the URI.
+  LONG_URI_LANGUAGES = %w(he ar ml mk).freeze
+  HIGH_REPLICA_LIMIT = 80
+  LOW_REPLICA_LIMIT = 20
+  def articles_per_replica_query
+    LONG_URI_LANGUAGES.include?(@wiki.language) ? LOW_REPLICA_LIMIT : HIGH_REPLICA_LIMIT
+  end
+
   # Check whether any deleted pages still exist with a different article_id.
   # If so, update the Article to use the new id.
   def update_article_ids(deleted_page_ids)
     maybe_deleted = Article.where(mw_page_id: deleted_page_ids, wiki_id: @wiki.id)
 
     # These pages have titles that match Articles in our DB with deleted ids
-    same_title_pages = Utils.chunk_requests(maybe_deleted, 100) do |block|
-      Replica.new(@wiki).get_existing_articles_by_title block
+    same_title_pages = Utils.chunk_requests(maybe_deleted, articles_per_replica_query) do |block|
+      request_results = Replica.new(@wiki).get_existing_articles_by_title block
+      @failed_request_count += 1 if request_results.nil?
+      request_results
     end
 
     # Update articles whose IDs have changed (keyed on title and namespace)
@@ -118,10 +159,7 @@ class ArticleStatusManager
     mw_page_id = same_title_page['page_id']
     namespace = same_title_page['page_namespace']
 
-    article = Article.find_by(wiki_id: @wiki.id,
-                              title: title,
-                              namespace: namespace,
-                              deleted: false)
+    article = Article.find_by(wiki_id: @wiki.id, title: title, namespace: namespace, deleted: false)
 
     return unless article_data_matches?(article, title, deleted_page_ids)
     update_article_page_id(article, mw_page_id)

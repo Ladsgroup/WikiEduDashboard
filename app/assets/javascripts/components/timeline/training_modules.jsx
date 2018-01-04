@@ -1,14 +1,17 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import Select from 'react-select';
+import _ from 'lodash';
 
-const TrainingModules = React.createClass({
+const TrainingModules = createReactClass({
   displayName: 'TrainingModules',
 
   propTypes: {
-    block_modules: React.PropTypes.array,
-    editable: React.PropTypes.bool,
-    all_modules: React.PropTypes.array,
-    onChange: React.PropTypes.func
+    block_modules: PropTypes.array,
+    editable: PropTypes.bool,
+    all_modules: PropTypes.array,
+    onChange: PropTypes.func
   },
 
   getInitialState() {
@@ -19,9 +22,10 @@ const TrainingModules = React.createClass({
     return { value: ids };
   },
 
-  onChange(value, values) {
-    this.setState({ value: values });
-    return this.props.onChange(value, values);
+  onChange(selections) {
+    const trainingModuleIds = selections.map(trainingModule => trainingModule.value);
+    this.setState({ value: trainingModuleIds });
+    return this.props.onChange(trainingModuleIds);
   },
 
   progressClass(progress) {
@@ -33,7 +37,7 @@ const TrainingModules = React.createClass({
   },
 
   trainingSelector() {
-    let options = _.compact(this.props.all_modules).map(module => ({ value: module.id, label: module.name }));
+    const options = _.compact(this.props.all_modules).map(module => ({ value: module.id, label: module.name }));
     return (
       <div className="block__training-modules">
         <div>
@@ -57,8 +61,8 @@ const TrainingModules = React.createClass({
       return this.trainingSelector();
     }
 
-    let modules = this.props.block_modules.map(module => {
-      let link = `/training/students/${module.slug}`;
+    const modules = this.props.block_modules.map(module => {
+      const link = `/training/students/${module.slug}`;
       let iconClassName = 'icon ';
       let progressClass;
       let linkText;
@@ -84,7 +88,7 @@ const TrainingModules = React.createClass({
         deadlineStatus = `(due on ${module.due_date})`;
       }
 
-      let moduleStatus = module.module_progress && module.deadline_status ? (
+      const moduleStatus = module.module_progress && module.deadline_status ? (
         <div>
           {module.module_progress}
           &nbsp;
@@ -102,7 +106,7 @@ const TrainingModules = React.createClass({
           <td className="block__training-modules-table__module-link">
             <a className={module.module_progress} href={link}>
               {linkText}
-              <i className={iconClassName}></i>
+              <i className={iconClassName} />
             </a>
           </td>
         </tr>

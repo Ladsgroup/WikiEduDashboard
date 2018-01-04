@@ -1,6 +1,7 @@
 # Messages for Armenian (Հայերեն)
 # Exported from translatewiki.net
 # Export driver: phpyaml
+# Author: Aram1985
 # Author: Kareyac
 # Author: KeepingCalm
 # Author: Lilitik22
@@ -49,6 +50,7 @@ hy:
     assigned_to: Հանձնարարված
     edited: Խմբագրված հոդվածներ
     edited_mobile: Հոդվածներ
+    hide: Թաքցնել
     label: Հոդվածներ
     loading: Բեռնվում են հոդվածները
     new: (նոր)
@@ -56,10 +58,14 @@ hy:
     rating_docs:
       b: B-դաս — չափավոր զարգացած հոդված.
       start: Մեկնարկի դաս — կարճ հոդված է, որը պետք է լրացնել.
+      does_not_exist: Այս հոդվածը գոյություն չունի ՝ Վիքիպեդիայում
+    show_current_version: Ցույց տալ ընթացիկ տարբերակը
     title: Վերնագիր
     title_example: Հոդվածի անվանումը
     view: Դիտել հոդվածը
     view_all: Դիտել բոլորը
+    view_on_wiki: Դիտել Վիքիյում
+    wiki: Վիքի
   assignments:
     already_exists: Այս անվանումով հանձնարարություն արդեն գոյություն ունի։
     assignees: Կատարողներ
@@ -78,7 +84,11 @@ hy:
     milestones:
       title: Փուլեր
   campaign:
-    programs: '%{{title} Նաագծեր'
+    confirm_course_removal: Դուք համոզված եք, որ ցանկանում եք ջնջել "%{title}"  "%{campaign_title}"
+      քարոզարշավից?
+    course_already_removed: '"%{title}" արդեն հեռացվել է %{campaign_title}" քարոզարշավից'
+    course_removed: '"%{title}" հեռացվել է %{campaign_title}" քարոզարշավից'
+    organizers: Կազմակերպիչներ
   courses:
     activity: Ակտիվություն
     course_description: Դասընթացներ
@@ -154,6 +164,10 @@ hy:
     loading: Բեռնել վերանայումները․․․
     time_doc: Յուրաքանչյուր վերանայման ժամանակը տեղական ժամանակով
     title: Վերնագիր
+    see_more: Տեսնել ավելին
+  suggestions:
+    suggestion_docs:
+      does_not_exist: 'Այս հոդվածը Վիքիպեդիայում գոյություն չունի:'
   training:
     start: Սկսել
     view: Դիտել

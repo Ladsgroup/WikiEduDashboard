@@ -1,21 +1,20 @@
 engines:
   rubocop:
     enabled: true
-  coffeelint:
-    enabled: true
   eslint:
     enabled: true
   csslint:
     enabled: true
   bundler-audit:
     enabled: true
+  brakeman:
+    enabled: true
+
 ratings:
   paths:
   - "**.rb"
-  - "**.coffee"
   - "**.js"
   - "**.jsx"
-  - "**.cjsx"
   - "**.css"
   - Gemfile.lock
 

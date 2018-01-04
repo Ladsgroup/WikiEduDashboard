@@ -1,35 +1,38 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import Block from './block.jsx';
 import OrderableBlock from './orderable_block.jsx';
 import BlockActions from '../../actions/block_actions.js';
 import GradeableStore from '../../stores/gradeable_store.js';
 
-import ReactCSSTG from 'react-addons-css-transition-group';
+import ReactCSSTG from 'react-transition-group/CSSTransitionGroup';
 import { Motion, spring } from 'react-motion';
 
 import DateCalculator from '../../utils/date_calculator.js';
 
-const Week = React.createClass({
+const Week = createReactClass({
   displayName: 'Week',
   propTypes: {
-    week: React.PropTypes.object,
-    index: React.PropTypes.number,
-    timeline_start: React.PropTypes.string,
-    timeline_end: React.PropTypes.string,
-    meetings: React.PropTypes.string,
-    blocks: React.PropTypes.array,
-    edit_permissions: React.PropTypes.bool,
-    editable_block_ids: React.PropTypes.array,
-    reorderable: React.PropTypes.bool,
-    onBlockDrag: React.PropTypes.func,
-    onMoveBlockUp: React.PropTypes.func,
-    onMoveBlockDown: React.PropTypes.func,
-    canBlockMoveUp: React.PropTypes.func,
-    canBlockMoveDown: React.PropTypes.func,
-    saveBlockChanges: React.PropTypes.func,
-    cancelBlockEditable: React.PropTypes.func,
-    deleteWeek: React.PropTypes.func,
-    all_training_modules: React.PropTypes.array
+    week: PropTypes.object,
+    index: PropTypes.number,
+    timeline_start: PropTypes.string,
+    timeline_end: PropTypes.string,
+    meetings: PropTypes.string,
+    blocks: PropTypes.array,
+    edit_permissions: PropTypes.bool,
+    editable_block_ids: PropTypes.array,
+    reorderable: PropTypes.bool,
+    onBlockDrag: PropTypes.func,
+    onMoveBlockUp: PropTypes.func,
+    onMoveBlockDown: PropTypes.func,
+    canBlockMoveUp: PropTypes.func,
+    canBlockMoveDown: PropTypes.func,
+    saveBlockChanges: PropTypes.func,
+    cancelBlockEditable: PropTypes.func,
+    deleteWeek: PropTypes.func,
+    all_training_modules: PropTypes.array,
+    weeksBeforeTimeline: PropTypes.number
   },
   getInitialState() {
     return { focusedBlockId: null };
@@ -74,15 +77,15 @@ const Week = React.createClass({
     }
 
 
-    let blocks = this.props.blocks.map((block, i) => {
+    const blocks = this.props.blocks.map((block, i) => {
       if (block.deleted) {
         return null;
       }
       // If in reorderable mode
       if (this.props.reorderable) {
-        let orderableBlock = value => {
+        const orderableBlock = value => {
           const rounded = Math.round(value.y);
-          let animating = rounded !== i * 75;
+          const animating = rounded !== i * 75;
           const willChange = animating ? 'top' : 'initial';
           const blockLineStyle = {
             top: rounded,
@@ -136,35 +139,35 @@ const Week = React.createClass({
       );
     });
 
-    let addBlock = !this.props.reorderable ? (
-      <span className="pull-right week__add-block" href="" onClick={this.addBlock}>Add Block</span>
+    const addBlock = !this.props.reorderable ? (
+      <button className="pull-right week__add-block" href="" onClick={this.addBlock}>Add Block</button>
     ) : undefined;
 
-    let deleteWeek = !this.props.reorderable && !this.props.week.is_new ? (
-      <span className="pull-right week__delete-week" href="" onClick={this.props.deleteWeek}>Delete Week</span>
+    const deleteWeek = !this.props.reorderable && !this.props.week.is_new ? (
+      <button className="pull-right week__delete-week" href="" onClick={this.props.deleteWeek}>Delete Week</button>
     ) : undefined;
 
-    let weekAddDelete = this.props.edit_permissions ? (
+    const weekAddDelete = this.props.edit_permissions ? (
       <div className="week__week-add-delete pull-right">
         {addBlock}
         {deleteWeek}
       </div>
     ) : undefined;
 
-    let weekContent = (
+    const weekContent = (
       this.props.reorderable ?
         (style = {
           position: 'relative',
           height: blocks.length * 75,
           transition: 'height 500ms ease-in-out'
         },
-        <ReactCSSTG transitionName="shrink" transitionEnterTimeout={250} transitionLeaveTimeout={250} component="ul" className="week__block-list list-unstyled" style={style}>
-          {blocks}
-        </ReactCSSTG>)
+          <ReactCSSTG transitionName="shrink" transitionEnterTimeout={250} transitionLeaveTimeout={250} component="ul" className="week__block-list list-unstyled" style={style}>
+            {blocks}
+          </ReactCSSTG>)
       :
-        <ul className="week__block-list list-unstyled">
+        (<ul className="week__block-list list-unstyled">
           {blocks}
-        </ul>
+        </ul>)
     );
 
     let weekClassName = `week week-${this.props.index}`;
@@ -172,12 +175,13 @@ const Week = React.createClass({
       weekClassName += ' timeline-warning';
     }
 
+    const weekNumber = this.props.index + this.props.weeksBeforeTimeline;
     return (
       <li className={weekClassName}>
         <div className="week__week-header">
           {weekAddDelete}
           {weekDates}
-          <p className="week-index">{I18n.t('timeline.week_number', { number: this.props.index })}</p>
+          <p className="week-index">{I18n.t('timeline.week_number', { number: weekNumber })}</p>
         </div>
         {weekContent}
       </li>

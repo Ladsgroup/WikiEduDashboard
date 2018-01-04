@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe ArticlesController do
@@ -22,9 +23,9 @@ describe ArticlesController do
     create(:courses_user, user_id: second_user.id, course_id: course.id)
   end
 
-  describe '#wp10' do
+  describe '#article_data' do
     it 'sets the article from the id' do
-      get :wp10, params: { article_id: article.id }, format: :json
+      get :article_data, params: { article_id: article.id }, format: :json
       expect(assigns(:article)).to eq(article)
     end
   end

@@ -14,9 +14,13 @@
 #  assigned_article_title :string(255)
 #  role                   :integer          default(0)
 #  recent_revisions       :integer          default(0)
+#  character_sum_draft    :integer          default(0)
+#  real_name              :string(255)
+#  role_description       :string(255)
 #
 
 require "#{Rails.root}/lib/utils"
+require "#{Rails.root}/lib/course_cleanup_manager"
 
 #= Course + User join model
 class CoursesUsers < ActiveRecord::Base
@@ -24,14 +28,15 @@ class CoursesUsers < ActiveRecord::Base
   belongs_to :user
   before_destroy :cleanup
 
-  has_many :assignments, -> (ac) { where(course_id: ac.course_id) },
+  has_many :assignments, ->(ac) { where(course_id: ac.course_id) },
            through: :user
 
   has_many :survey_notifications
 
-  validates :course_id, uniqueness: { scope: [:user_id, :role] }
+  validates :course_id, uniqueness: { scope: %i[user_id role] }
 
   scope :current, -> { joins(:course).merge(Course.current).distinct }
+  scope :ready_for_update, -> { joins(:course).merge(Course.ready_for_update).distinct }
 
   ####################
   # CONSTANTS        #
@@ -59,24 +64,8 @@ class CoursesUsers < ActiveRecord::Base
     "#{course.home_wiki.base_url}/wiki/Special:PrefixIndex/User:#{user.url_encoded_username}"
   end
 
-  def character_sum_ms
-    update_cache unless self[:character_sum_ms]
-    self[:character_sum_ms]
-  end
-
-  def character_sum_us
-    update_cache unless self[:character_sum_us]
-    self[:character_sum_us]
-  end
-
-  def revision_count
-    update_cache unless self[:revision_count]
-    self[:revision_count]
-  end
-
-  def recent_revisions
-    update_cache unless self[:recent_revisions]
-    self[:recent_revisions]
+  def talk_page_url
+    "#{course.home_wiki.base_url}/wiki/User_talk:#{user.url_encoded_username}"
   end
 
   def assigned_article_title
@@ -92,10 +81,15 @@ class CoursesUsers < ActiveRecord::Base
     role.positive? && user.permissions == 1 && user.greeter == false
   end
 
+  def live_revisions
+    course.revisions.joins(:article).where(user_id: user.id).live
+  end
+
   def update_cache
-    revisions = course.revisions.joins(:article).where(user_id: user.id)
+    revisions = live_revisions
     self.character_sum_ms = character_sum(revisions, Article::Namespaces::MAINSPACE)
     self.character_sum_us = character_sum(revisions, Article::Namespaces::USER)
+    self.character_sum_draft = character_sum(revisions, Article::Namespaces::DRAFT)
     self.revision_count = revisions.where(articles: { deleted: false }).size || 0
     self.recent_revisions = RevisionStat.recent_revisions_for_courses_user(self).count
     assignments = user.assignments.where(course_id: course.id)
@@ -116,6 +110,7 @@ class CoursesUsers < ActiveRecord::Base
   def cleanup
     Assignment.where(user_id: user_id, course_id: course_id).destroy_all
     survey_notifications.destroy_all
+    CourseCleanupManager.new(course, user).cleanup_articles
   end
 
   #################
@@ -123,5 +118,16 @@ class CoursesUsers < ActiveRecord::Base
   #################
   def self.update_all_caches(courses_users=nil)
     Utils.run_on_all(CoursesUsers, :update_cache, courses_users)
+  end
+
+  def self.update_all_caches_concurrently(concurrency = 2)
+    threads = CoursesUsers.ready_for_update
+                          .in_groups(concurrency, false)
+                          .map.with_index do |courses_users_batch, i|
+      Thread.new(i) do
+        update_all_caches(courses_users_batch)
+      end
+    end
+    threads.each(&:join)
   end
 end

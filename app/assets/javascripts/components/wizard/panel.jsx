@@ -1,26 +1,30 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
+import _ from 'lodash';
+
 const md = require('../../utils/markdown_it.js').default();
 import WizardActions from '../../actions/wizard_actions.js';
 import CourseLink from '../common/course_link.jsx';
-import Option from './option.cjsx';
+import Option from './option.jsx';
 
-const Panel = React.createClass({
+const Panel = createReactClass({
   displayName: 'Panel',
 
   propTypes: {
-    course: React.PropTypes.object,
-    panel: React.PropTypes.object,
-    saveCourse: React.PropTypes.func,
-    nextEnabled: React.PropTypes.func,
-    index: React.PropTypes.number,
-    rewind: React.PropTypes.func,
-    open_weeks: React.PropTypes.number,
-    raw_options: React.PropTypes.node,
-    advance: React.PropTypes.func,
-    button_text: React.PropTypes.string,
-    helperText: React.PropTypes.string,
-    summary: React.PropTypes.bool,
-    step: React.PropTypes.string
+    course: PropTypes.object,
+    panel: PropTypes.object,
+    saveCourse: PropTypes.func,
+    nextEnabled: PropTypes.func,
+    index: PropTypes.number,
+    rewind: PropTypes.func,
+    open_weeks: PropTypes.number,
+    raw_options: PropTypes.node,
+    advance: PropTypes.func,
+    button_text: PropTypes.string,
+    helperText: PropTypes.string,
+    summary: PropTypes.bool,
+    step: PropTypes.string
   },
 
   advance() {
@@ -57,13 +61,14 @@ const Panel = React.createClass({
       rewindTop = <a href="" onClick={this.rewind} className="icon icon-left_arrow">Previous</a>;
     }
 
-    let options1 = [];
-    let options2 = [];
+    const options1 = [];
+    const options2 = [];
 
     if (this.props.panel.options !== undefined) {
       this.props.panel.options.forEach((option, i) => {
         option = (
-          <Option option={option}
+          <Option
+            option={option}
             panel_index={this.props.index}
             key={`${this.props.index}${i}`}
             index={i}
@@ -76,7 +81,7 @@ const Panel = React.createClass({
       });
     }
 
-    let options = this.props.raw_options || (
+    const options = this.props.raw_options || (
       <div>
         <div className="left">{options1}</div>
         <div className="right">{options2}</div>
@@ -84,9 +89,9 @@ const Panel = React.createClass({
     );
     let classes = 'wizard__panel';
     if (this.props.panel.active) { classes += ' active'; }
-    let advance = this.props.advance || this.advance;
+    const advance = this.props.advance || this.advance;
 
-    let nextText = this.props.button_text || (this.props.summary ? 'Summary' : 'Next');
+    const nextText = this.props.button_text || (this.props.summary ? 'Summary' : 'Next');
 
 
     let reqsMet = true;
@@ -107,10 +112,10 @@ const Panel = React.createClass({
       }
     }
 
-    let helperText = this.props.helperText || '';
-    let errorClass = this.props.panel.error ? 'red' : '';
-    let nextDisabled = reqsMet && this.nextEnabled() ? '' : 'disabled';
-    let courseLink = `/courses/${this.props.course.slug}/timeline`;
+    const helperText = this.props.helperText || '';
+    const errorClass = this.props.panel.error ? 'red' : '';
+    const nextDisabled = reqsMet && this.nextEnabled() ? '' : 'disabled';
+    const courseLink = `/courses/${this.props.course.slug}/timeline`;
 
     return (
       <div className={classes}>
@@ -123,7 +128,7 @@ const Panel = React.createClass({
           </div>
         </div>
         <h3>{this.props.panel.title}</h3>
-        <div dangerouslySetInnerHTML={{ __html: md.render(this.props.panel.description) }}></div>
+        <div dangerouslySetInnerHTML={{ __html: md.render(this.props.panel.description) }} />
         <div className="wizard__panel__options">{options}</div>
         <div className="wizard__panel__controls">
           <div className="left">

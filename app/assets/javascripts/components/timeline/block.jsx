@@ -1,4 +1,6 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import TextInput from '../common/text_input.jsx';
 import DatePicker from '../common/date_picker.jsx';
 import TextAreaInput from '../common/text_area_input.jsx';
@@ -8,20 +10,20 @@ import BlockTypeSelect from './block_type_select.jsx';
 import BlockActions from '../../actions/block_actions.js';
 import GradeableActions from '../../actions/gradeable_actions.js';
 
-const Block = React.createClass({
+const Block = createReactClass({
   displayName: 'Block',
 
   propTypes: {
-    block: React.PropTypes.object,
-    gradeable: React.PropTypes.object,
-    editableBlockIds: React.PropTypes.array,
-    editPermissions: React.PropTypes.bool,
-    saveBlockChanges: React.PropTypes.func,
-    cancelBlockEditable: React.PropTypes.func,
-    toggleFocused: React.PropTypes.func,
-    isDragging: React.PropTypes.bool,
-    all_training_modules: React.PropTypes.array,
-    weekStart: React.PropTypes.object
+    block: PropTypes.object,
+    gradeable: PropTypes.object,
+    editableBlockIds: PropTypes.array,
+    editPermissions: PropTypes.bool,
+    saveBlockChanges: PropTypes.func,
+    cancelBlockEditable: PropTypes.func,
+    toggleFocused: PropTypes.func,
+    isDragging: PropTypes.bool,
+    all_training_modules: PropTypes.array,
+    weekStart: PropTypes.object
   },
 
   updateBlock(valueKey, value) {
@@ -31,9 +33,8 @@ const Block = React.createClass({
     return BlockActions.updateBlock(toPass);
   },
 
-  passedUpdateBlock(_, modules) {
+  passedUpdateBlock(selectedIds) {
     const newBlock = $.extend(true, {}, this.props.block);
-    const selectedIds = modules.map(module => module.value);
     newBlock.training_module_ids = selectedIds;
     return BlockActions.updateBlock(newBlock);
   },
@@ -63,8 +64,8 @@ const Block = React.createClass({
   },
 
   render() {
-    let isEditable = this._isEditable();
-    let isGraded = this.props.gradeable !== undefined && !this.props.gradeable.deleted;
+    const isEditable = this._isEditable();
+    const isGraded = this.props.gradeable !== undefined && !this.props.gradeable.deleted;
     let className = 'block';
     className += ` block-kind-${this.props.block.kind}`;
 
@@ -78,7 +79,7 @@ const Block = React.createClass({
       blockActions = (
         <div className="float-container block__block-actions">
           <button onClick={this.props.saveBlockChanges.bind(null, this.props.block.id)} className="button dark pull-right no-clear">Save</button>
-          <span role="button" onClick={this.props.cancelBlockEditable.bind(null, this.props.block.id)} className="span-link pull-right no-clear">Cancel</span>
+          <span role="button" tabIndex={0} onClick={this.props.cancelBlockEditable.bind(null, this.props.block.id)} className="span-link pull-right no-clear">Cancel</span>
         </div>
       );
     }
@@ -137,7 +138,7 @@ const Block = React.createClass({
       );
     }
 
-    let content = (
+    const content = (
       <div className="block__editor-container">
         <TextAreaInput
           onChange={this.updateBlock}
@@ -154,11 +155,11 @@ const Block = React.createClass({
       </div>
     );
 
-    let dueDateSpacer = this.props.block.due_date ? (
+    const dueDateSpacer = this.props.block.due_date ? (
       <span className="block__due-date-spacer"> - </span>
     ) : undefined;
 
-    let editButton = this.props.editPermissions ? (
+    const editButton = this.props.editPermissions ? (
       <div className="block__edit-button-container">
         <button className="pull-right button ghost-button block__edit-block" onClick={this._setEditable}>Edit</button>
       </div>

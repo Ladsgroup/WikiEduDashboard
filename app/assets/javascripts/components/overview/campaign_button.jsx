@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import PopoverButton from '../high_order/popover_button.jsx';
 import CampaignStore from '../../stores/campaign_store.js';
 
@@ -6,7 +7,7 @@ const campaignIsNew = campaign => CampaignStore.getFiltered({ title: campaign })
 
 const campaigns = (props, remove) =>
   props.campaigns.map(campaign => {
-    let removeButton = (
+    const removeButton = (
       <button className="button border plus" onClick={remove.bind(null, campaign.id)}>-</button>
     );
     return (
@@ -18,7 +19,7 @@ const campaigns = (props, remove) =>
 ;
 
 campaigns.propTypes = {
-  campaigns: React.PropTypes.array
+  campaigns: PropTypes.array
 };
 
 export default PopoverButton('campaign', 'title', CampaignStore, campaignIsNew, campaigns, true);

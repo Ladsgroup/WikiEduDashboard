@@ -1,9 +1,12 @@
 import '../../testHelper';
 
 import React from 'react';
-import ReactTestUtils from 'react-addons-test-utils';
-
+import ReactTestUtils from "react-dom/test-utils";
 import Article from '../../../app/assets/javascripts/components/articles/article.jsx';
+
+const course = {
+  home_wiki: { language: 'en', project: 'wikipedia' }
+};
 
 describe('Article', () => {
   it('renders', () => {
@@ -15,6 +18,7 @@ describe('Article', () => {
       character_sum: 10,
       view_count: 5,
       language: 'en',
+      project: 'wikipedia',
       title: 'articleTitle',
       new_article: false
     };
@@ -22,7 +26,14 @@ describe('Article', () => {
     const TestArticle = ReactTestUtils.renderIntoDocument(
       <table>
         <tbody>
-          <Article article={article} />
+          <Article
+            article={article}
+            course={course}
+            isOpen={false}
+            toggleDrawer={() => {}}
+            fetchArticleDetails={() => {}}
+            articleDetails={null}
+          />
         </tbody>
       </table>
     );
@@ -40,6 +51,7 @@ describe('Article', () => {
       character_sum: 10,
       view_count: 5,
       language: 'en',
+      project: 'wikipedia',
       title: 'articleTitle',
       new_article: true
     };
@@ -47,7 +59,14 @@ describe('Article', () => {
     const TestArticle = ReactTestUtils.renderIntoDocument(
       <table>
         <tbody>
-          <Article article={article} />
+          <Article
+            article={article}
+            course={course}
+            isOpen={false}
+            toggleDrawer={() => {}}
+            fetchArticleDetails={() => {}}
+            articleDetails={null}
+          />
         </tbody>
       </table>
     );

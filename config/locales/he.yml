@@ -7,9 +7,14 @@
 # Author: IKhitron
 # Author: LaG roiL
 # Author: Macofe
+# Author: Mikey641
 # Author: MojoMann
 # Author: Or
+# Author: Uziel302
+# Author: YaronSh
+# Author: המקיסט
 # Author: פוילישער
+# Author: תומר ט
 ---
 he:
   application:
@@ -37,6 +42,8 @@ he:
     submit: שליחה
     training: הדרכה
     change: שינוי
+    details: פרטים
+    confirm: אישור
   dashboard:
     create_note: לחץ על "יצירת תוכנית חדשה" בכדי ליצור את התוכנית או הקורס הראשון
       שלך.
@@ -73,7 +80,9 @@ he:
     character_doc: 'סך התווים שנוספו לערכים על־ידי עורכים הרשומים לתוכנית בין תאריכי
       ההתחלה והסיום:'
     edited: ערכים שנערכו
+    edited_by: 'נערך על־ידי:'
     edited_mobile: ערכים
+    hide: הסתרה
     label: ערכים
     loading: טעינת ערכים...
     new: (חדש)
@@ -98,12 +107,15 @@ he:
         נוסף.
       list: רשימה – רשימה, ולא ערך רגיל
       '?': לא מדורג – ערך שעדיין לא דורג בסולם האיכות של ויקיפדיה
+      does_not_exist: הערך אינו קיים בוויקיפדיה
     show_cumulative_changes: הצגת שינויים מצטברים
+    show_current_version: הצג גרסה נוכחית
     title: כותרת \ שם
     title_example: שם הערך
     view: הצגת הערך
-    view_all: הצג הכל
+    view_all: להציג הכול
     view_doc: סך מספר הצפיות בכל ערך במהלך התוכנית
+    view_on_wiki: הצג בוויקי
     views_added: נוספו %{count} צפיות חדשות לדף %{title}
     wp10: שלמות מבנית
     wp10_doc: "הציון עבור \"שלמות מבנית\" מייצג עד כמה הערך מתאים לתבנית של ערך ויקיפדיה
@@ -116,6 +128,7 @@ he:
       \nשימו לב שנכון להיום הציון הזה זמין רק לערכים שנכתבו בוויקיפדיה האנגלית."
   assignments:
     already_exists: הקצאה זו כבר קיימת!
+    title_too_large: הכותרת לא אמורה לחרוג מ־255 תווים
     assignees: משתתפים שהוקצה להם ערך
     assign_other: שיוך ערך
     add_available: הוספת ערך הזמין לעבודה במסגת התוכנית \ הקורס \ המיזם
@@ -138,8 +151,8 @@ he:
       title: אבני דרך
   campaign:
     campaign: מיזם \ פרויקט \ קמפיין
+    description: תיאור
     none: אין
-    programs: תוכניות %{title}
   courses:
     activity: פעילות
     already_enrolled: הינך כבר חלק מ%{title}!
@@ -218,6 +231,7 @@ he:
       start_date_placeholder: תאריך התחלה (שנה-חודש-יום)
       subject: נושא
     current: תוכניות \ קורסים \ מיזמים פעילים
+    data_edits: עורך נתונים
     delete_course: מחיקת התוכנית \ הקורס \ המיזם
     dismiss_survey: ביטול
     dismiss_survey_confirm: האם ברצונך לסגור לצמיתות את השאלון הזה?
@@ -231,6 +245,8 @@ he:
         או מועד אחר.
       user_exists: סליחה, %{username} אינו משתמש קיים במערכת.
       invalid_language_or_project: שפה או מיזם לא חוקי
+      invalid_slug: שם בית הספר או הקורס לא מולאו.
+      duplicate_slug: תוכנית אחרת בשם %{slug} כבר קיימת.
     expected_students: משתתפים מצופים
     gradeables_none: לתוכנית \ לקורס \ למיזם הזה אין הקצאות שאפשר לתת להן ציונים.
     instructor:
@@ -269,6 +285,7 @@ he:
     start: התחלה
     start_typing: התחילו להקליד
     students: משתתפים
+    students_taught: תלמידים למדו
     students_count: מס' משתתפים
     student_editors: משתתפים עורכים
     students_none: בתוכנית \ בקורס \ במיזם הזה אין משתתפים.
@@ -364,6 +381,7 @@ he:
     edit: עריכה
     cancel: ביטול
     save: שמירה
+    edit_details: ערוך פרטים
   metrics:
     activity: פעילות לאחרונה
     are_trained: משתתפים אשר השלימו הדרכה
@@ -471,7 +489,7 @@ he:
     no_timeline: אין לוח זמנים בתוכנית \ בקורס \ במיזם הזה.
     no_activity_this_week: אין פגישות מתוכננות השבוע
     nothing_this_week: לא מתוכנן שום דבר לשבוע הזה.
-    save_all_changes: שמירת הכל
+    save_all_changes: לשמור הכול
     this_week_title_default: השבוע
     title: לוח הזמנים
     unable_to_add_week: לא ניתן להוסיף שבועות חדשים שלוח הזמנים שלך מלא. יש למחוק
@@ -556,6 +574,8 @@ he:
       campus_volunteer: מתנדב\ת קמפוס
       online_volunteer: חונכות וחונכים מקוונים
       wiki_ed_staff: צוות מיזמי החינוך
+  user_profiles:
+    location_placeholder: הוספת המיקום שלך (רשות)
   wiki_edits:
     notify_overdue:
       confirm: פעולה זו תפרסם תזכורת בדפי השיחה של המשתתפים שלא השלימו את ההדרכה בזמן.

@@ -41,15 +41,26 @@
 #  home_wiki_id          :integer
 #  recent_revision_count :integer          default(0)
 #  needs_update          :boolean          default(FALSE)
+#  chatroom_id           :string(255)
+#  flags                 :text(65535)
+#  level                 :string(255)
+#  private               :boolean          default(FALSE)
 #
 
 class BasicCourse < Course
   def wiki_edits_enabled?
-    false
+    true
+  end
+
+  def wiki_course_page_enabled?
+    true
   end
 
   def wiki_title
-    nil
+    return nil unless home_wiki.edits_enabled?
+    prefix = ENV['course_prefix'] + '/'
+    escaped_slug = slug.tr(' ', '_')
+    "#{prefix}#{escaped_slug}"
   end
 
   def string_prefix
@@ -58,5 +69,13 @@ class BasicCourse < Course
 
   def use_start_and_end_times
     true
+  end
+
+  def multiple_roles_allowed?
+    true
+  end
+
+  def passcode_required?
+    false
   end
 end

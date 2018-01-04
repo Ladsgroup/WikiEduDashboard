@@ -1,44 +1,22 @@
 /* global vg */
 import React from 'react';
-import OnClickOutside from 'react-onclickoutside';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 
-const Wp10Graph = React.createClass({
+const Wp10Graph = createReactClass({
   displayName: 'Wp10Graph',
 
   propTypes: {
-    article: React.PropTypes.object
-  },
-
-  getInitialState() {
-    return { showGraph: false };
-  },
-
-  showGraph() {
-    this.setState({ showGraph: true });
-    if (!this.state.rendered) {
-      this.renderGraph();
-    }
-  },
-
-  hideGraph() {
-    this.setState({ showGraph: false });
-  },
-
-  handleClickOutside() {
-    this.hideGraph();
-  },
-
-  graphId() {
-    return `vega-graph-${this.props.article.id}`;
+    graphid: PropTypes.string,
+    graphWidth: PropTypes.number,
+    graphHeight: PropTypes.number,
+    articleData: PropTypes.array
   },
 
   renderGraph() {
-    const articleId = this.props.article.id;
-    const graphWidth = 500;
-    const graphHeight = 300;
     const vegaSpec = {
-      width: graphWidth,
-      height: graphHeight,
+      width: this.props.graphWidth,
+      height: this.props.graphHeight,
       padding: { top: 40, left: 70, right: 20, bottom: 35 },
       // //////////////////
       // Scales and Axes //
@@ -55,14 +33,14 @@ const Wp10Graph = React.createClass({
             }]
           },
           rangeMin: 0,
-          rangeMax: graphWidth,
+          rangeMax: this.props.graphWidth,
           round: true
         },
         {
           name: 'y',
           type: 'linear',
           domain: [0, 100, 0, 100],
-          rangeMin: graphHeight,
+          rangeMin: this.props.graphHeight,
           rangeMax: 0,
           round: true,
           nice: true,
@@ -79,7 +57,7 @@ const Wp10Graph = React.createClass({
           title: 'Date',
           properties: {
             labels: {
-              text: { template: '{{datum[\"data\"] | time:\'%b %d\'}}' },
+              text: { template: '{{datum["data"] | time:\'%b %d\'}}' },
               angle: { value: 0 }
             }
           }
@@ -100,11 +78,11 @@ const Wp10Graph = React.createClass({
       data: [
         {
           name: 'wp10_scores',
-          url: `/articles/wp10.json?article_id=${articleId}`,
+          values: this.props.articleData,
           format: { type: 'json', parse: { date: 'date', wp10: 'number' } },
           transform: [{
             type: 'filter',
-            test: 'datum[\"date\"] !== null && !isNaN(datum[\"date\"]) && datum[\"wp10\"] !== null && !isNaN(datum[\"wp10\"])'
+            test: 'datum.date !== null && !isNaN(datum.date) && datum.wp10 !== null && !isNaN(datum.wp10)'
           }]
         }
       ],
@@ -214,34 +192,17 @@ const Wp10Graph = React.createClass({
       spec: vegaSpec,
       actions: false
     };
-    vg.embed(`#${this.graphId()}`, embedSpec);
-    this.setState({ rendered: true });
+    vg.embed(`#${this.props.graphid}`, embedSpec);
   },
 
   render() {
-    // Only render the button if it is an en.wikipedia article, since only
-    // those articles have wp10 scores.
-    if (!this.props.article.url.match(/en.wikipedia/)) {
-      return <div></div>;
-    }
-
-    let style;
-    let button;
-    if (this.state.showGraph) {
-      style = '';
-      button = <button onClick={this.hideGraph} className="button dark">Hide graph</button>;
-    } else {
-      style = ' hidden';
-      button = <button onClick={this.showGraph} className="button dark">Show Structural Completeness</button>;
-    }
-    const className = `vega-graph ${style}`;
+    this.renderGraph();
     return (
       <div>
-        {button}
-        <div id={this.graphId()} className={className} />
+        <div id={this.props.graphid} />
       </div>
     );
   }
 });
 
-export default OnClickOutside(Wp10Graph);
+export default Wp10Graph;

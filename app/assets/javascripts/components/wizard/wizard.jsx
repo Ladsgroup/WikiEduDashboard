@@ -1,13 +1,15 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import Panel from './panel.jsx';
-import FormPanel from './form_panel.cjsx';
-import SummaryPanel from './summary_panel.cjsx';
+import FormPanel from './form_panel.jsx';
+import SummaryPanel from './summary_panel.jsx';
 
 import Modal from '../common/modal.jsx';
 import WizardActions from '../../actions/wizard_actions.js';
 import ServerActions from '../../actions/server_actions.js';
 import WizardStore from '../../stores/wizard_store.js';
-import TransitionGroup from 'react-addons-css-transition-group';
+import TransitionGroup from 'react-transition-group/CSSTransitionGroup';
 
 const getState = () =>
   ({
@@ -17,13 +19,13 @@ const getState = () =>
   })
 ;
 
-const Wizard = React.createClass({
+const Wizard = createReactClass({
   displayName: 'Wizard',
   propTypes: {
-    location: React.PropTypes.object,
-    course: React.PropTypes.object,
-    weeks: React.PropTypes.array,
-    open_weeks: React.PropTypes.number
+    location: PropTypes.object,
+    course: PropTypes.object,
+    weeks: PropTypes.array,
+    open_weeks: PropTypes.number
   },
   mixins: [WizardStore.mixin],
   getInitialState() {
@@ -44,7 +46,7 @@ const Wizard = React.createClass({
     return routes.join('/');
   },
   render() {
-    let panels = this.state.panels.map((panel, i) => {
+    const panels = this.state.panels.map((panel, i) => {
       const panelCount = this.state.panels.length;
       const stepNumber = i + 1;
       let outOf;
@@ -53,7 +55,7 @@ const Wizard = React.createClass({
       } else {
         outOf = '';
       }
-      let step = `Step ${stepNumber}${outOf}`;
+      const step = `Step ${stepNumber}${outOf}`;
       if (i === 0) {
         return (
           <FormPanel

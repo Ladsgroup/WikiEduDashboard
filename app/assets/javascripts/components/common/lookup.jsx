@@ -1,17 +1,19 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import { Typeahead } from 'react-typeahead';
 import LookupWrapper from '../high_order/lookup_wrapper.jsx';
 
-const Lookup = React.createClass({
+const Lookup = createReactClass({
   displayName: 'Lookup',
 
   propTypes: {
-    disabled: React.PropTypes.bool,
-    onSubmit: React.PropTypes.func,
-    onChange: React.PropTypes.func,
-    value: React.PropTypes.string,
-    placeholder: React.PropTypes.string,
-    models: React.PropTypes.array
+    disabled: PropTypes.bool,
+    onSubmit: PropTypes.func,
+    onChange: PropTypes.func,
+    value: PropTypes.string,
+    placeholder: PropTypes.string,
+    models: PropTypes.array
   },
 
   getValue() {
@@ -41,7 +43,7 @@ const Lookup = React.createClass({
   },
 
   render() {
-    let placeholder = this.props.placeholder || I18n.t('courses.start_typing');
+    const placeholder = this.props.placeholder || I18n.t('courses.start_typing');
     if (!this.props.disabled) {
       return (
         <Typeahead

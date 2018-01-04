@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import PopoverButton from '../high_order/popover_button.jsx';
 import TagStore from '../../stores/tag_store.js';
 
@@ -6,7 +7,7 @@ const tagIsNew = tag => TagStore.getFiltered({ tag }).length === 0;
 
 const tags = (props, remove) =>
   props.tags.map(tag => {
-    let removeButton = (
+    const removeButton = (
       <button className="button border plus" onClick={remove.bind(null, tag.id)}>-</button>
     );
     return (
@@ -18,7 +19,7 @@ const tags = (props, remove) =>
 ;
 
 tags.propTypes = {
-  tags: React.PropTypes.array
+  tags: PropTypes.array
 };
 
 export default PopoverButton('tag', 'tag', TagStore, tagIsNew, tags);

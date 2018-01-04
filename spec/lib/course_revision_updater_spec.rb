@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 require "#{Rails.root}/lib/course_revision_updater"
 
@@ -43,45 +44,6 @@ describe CourseRevisionUpdater do
   end
 
   describe '.import_new_revisions' do
-    context 'when the course is not current but "needs_update" is true' do
-      let(:course) { create(:course, start: '2016-03-20', end: '2016-03-31', needs_update: true) }
-      let(:user) { create(:user) }
-      let!(:student) { create(:courses_user, user_id: user.id, course_id: course.id) }
-
-      it 'updates and sets `needs_update` to false' do
-        expect_any_instance_of(CourseRevisionUpdater)
-          .to receive(:update_revisions_for_relevant_wikis)
-        expect(Course.current).not_to include(course)
-        CourseRevisionUpdater.import_new_revisions
-        expect(course.reload.needs_update).to eq(false)
-      end
-    end
-
-    it 'fetches revisions for existing courses' do
-      VCR.use_cassette 'revisions/update_all_revisions' do
-        # Try it with no courses.
-        CourseRevisionUpdater.import_new_revisions
-        expect(Revision.all.count).to eq(0)
-
-        # Now add a course with users
-        VCR.use_cassette 'wiki/course_data' do
-          LegacyCourseImporter.update_all_courses(false, campaign: [351])
-        end
-
-        CourseRevisionUpdater.import_new_revisions(Course.all)
-        # When the non-students are included, Revisions count is 1919.
-        expect(Revision.all.count).to eq(519)
-        # When the non-students are included, ArticlesCourses count is 224.
-        expect(ArticlesCourses.all.count).to eq(10)
-
-        # Update the revision counts, then try update_all_revisions again
-        # to test how it handles old users.
-        CourseRevisionUpdater.import_new_revisions(Course.all)
-        expect(Revision.all.count).to eq(519)
-        expect(ArticlesCourses.all.count).to eq(10)
-      end
-    end
-
     it 'includes revisions on the final day of a course up to the end time' do
       create(:course, id: 1, start: '2016-03-20', end: '2016-03-31'.to_date.end_of_day)
       create(:user, id: 1, username: 'Tedholtby')
@@ -135,6 +97,25 @@ describe CourseRevisionUpdater do
         CourseRevisionUpdater.import_new_revisions(Course.all)
         expect(Revision.all.count > 1).to be true
       end
+    end
+  end
+
+  describe '.import_new_revisions_concurrently' do
+    let!(:course) { create(:course) }
+    it 'calls import_new_revisions multiple times' do
+      expect(CourseRevisionUpdater).to receive(:import_new_revisions)
+        .exactly(Replica::CONCURRENCY_LIMIT).times
+      CourseRevisionUpdater.import_new_revisions_concurrently(Course.all)
+    end
+  end
+
+  describe '#default_wiki_ids' do
+    it 'includes wikidata for Programs & Events Dashboard' do
+      stub_wiki_validation
+      wiki_data = Wiki.get_or_create(language: nil, project: 'wikidata')
+      allow(Features).to receive(:wiki_ed?).and_return(false)
+      ids = CourseRevisionUpdater.new(create(:course)).default_wiki_ids
+      expect(ids).to include(wiki_data.id)
     end
   end
 end

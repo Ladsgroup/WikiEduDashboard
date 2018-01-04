@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "#{Rails.root}/lib/revision_stat"
 require "#{Rails.root}/lib/course_training_progress_manager"
 
@@ -24,7 +25,7 @@ class CourseCacheManager
   end
 
   def update_user_count
-    @course.user_count = @course.students_without_nonstudents.size
+    @course.user_count = @course.students.size
   end
 
   private
@@ -53,13 +54,13 @@ class CourseCacheManager
     trained_count = if past_training_cutoff?
                       @course.students_up_to_date_with_training.count
                     else
-                      @course.students_without_nonstudents.trained.size
+                      @course.students.trained.size
                     end
     @course.trained_count = trained_count
   end
 
   def update_revision_count
-    @course.revision_count = @course.revisions.size
+    @course.revision_count = @course.revisions.live.size
   end
 
   def update_recent_revision_count

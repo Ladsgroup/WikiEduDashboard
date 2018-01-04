@@ -1,8 +1,10 @@
 # Messages for Esperanto (Esperanto)
 # Exported from translatewiki.net
 # Export driver: phpyaml
+# Author: Fitoschido
 # Author: Lucas
 # Author: Ochilov
+# Author: Rafaneta
 # Author: Robin van der Vliet
 # Author: 1490493253
 ---
@@ -16,9 +18,15 @@ eo:
     change: Ŝanĝi
   articles:
     edited_mobile: Artikoloj
+    hide: Kaŝi
     new: (nova)
     rating: Klaso
+    rating_docs:
+      does_not_exist: Ĉi tiu artikolo ne ekzistas en Vikipedio
+    show_current_version: Montri nunan version
     title: Titolo
+  campaign:
+    description: Priskribo
   courses:
     activity: Aktiveco
     actions: Agoj
@@ -47,7 +55,7 @@ eo:
       course_school: Lernejo
       create_button: Krei mian programon!
       create_label: Krei novan programon
-      create_new: Krei novan programon
+      create_new: Krei sendependan programon
       create_short: Krei programon
       find: Trovi programon
   editable:

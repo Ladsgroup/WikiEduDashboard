@@ -1,7 +1,6 @@
 # frozen_string_literal: true
-require 'rails_helper'
 
-cached_default_course_type = ENV['default_course_type']
+require 'rails_helper'
 
 def fill_out_open_course_creator_form
   fill_in 'Program title:', with: '한국어'
@@ -13,26 +12,34 @@ end
 
 describe 'open course creation', type: :feature, js: true do
   let(:user) { create(:user) }
+  let(:campaign) do
+    create(:campaign,
+           id: 10001,
+           title: 'My Awesome Campaign',
+           description: 'This is the best campaign',
+           template_description: 'This is the template description')
+  end
+
   before do
+    stub_wiki_validation
     @system_time_zone = Time.zone
     Time.zone = 'Eastern Time (US & Canada)'
-    ENV['default_course_type'] = 'BasicCourse'
-    Capybara.current_driver = :poltergeist
     page.current_window.resize_to(1920, 1080)
 
     allow(Features).to receive(:open_course_creation?).and_return(true)
     allow(Features).to receive(:disable_wiki_output?).and_return(true)
+    allow(Features).to receive(:default_course_type).and_return('BasicCourse')
+
     login_as(user)
   end
 
   after do
     Time.zone = @system_time_zone
-    ENV['default_course_type'] = cached_default_course_type
   end
 
   it 'lets a user create a course immediately', js: true do
     visit root_path
-    click_link 'Create a New Program'
+    click_link 'Create an Independent Program'
     fill_out_open_course_creator_form
     fill_in 'Home language:', with: 'ta'
     fill_in 'Home project', with: 'wiktionary'
@@ -48,7 +55,7 @@ describe 'open course creation', type: :feature, js: true do
 
   it 'defaults to English Wikipedia' do
     visit root_path
-    click_link 'Create a New Program'
+    click_link 'Create an Independent Program'
     fill_out_open_course_creator_form
     click_button 'Create my Program!'
     expect(page).to have_content 'This project has been published!'
@@ -61,5 +68,16 @@ describe 'open course creation', type: :feature, js: true do
     visit root_path
     click_link 'Find a Program'
     page.find('section#courses')
+  end
+
+  it 'should create a course belonging to a given campaign' do
+    visit course_creator_path(campaign_slug: campaign.slug)
+    expect(page).to have_content campaign.title
+    fill_out_open_course_creator_form
+    click_button 'Create my Program!'
+    sleep 1
+    expect(CampaignsCourses.last.campaign_id).to eq(campaign.id)
+    expect(CampaignsCourses.last.course_id).to eq(Course.last.id)
+    expect(Course.last.description).to eq(campaign.template_description)
   end
 end

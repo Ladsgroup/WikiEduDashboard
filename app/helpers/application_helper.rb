@@ -2,9 +2,26 @@
 
 #= Root-level helpers
 module ApplicationHelper
+  def logo_path
+    logo_path = "/assets/images/#{Figaro.env.logo_file}"
+    logo_path
+  end
+
   def logo_tag
     logo_path = "/assets/images/#{Figaro.env.logo_file}"
     image_tag logo_path
+  end
+
+  def permissions
+    if Features.wiki_ed? && current_user&.permissions == User::Permissions::NONE
+      'true'
+    else
+      'false'
+    end
+  end
+
+  def language_switcher_enabled
+    Features.enable_language_switcher?.to_s
   end
 
   def logo_favicon_tag
@@ -19,9 +36,11 @@ module ApplicationHelper
 
   def dashboard_stylesheet_tag(filename)
     if Features.hot_loading?
-      stylesheet_link_tag "/assets/stylesheets/#{filename}.css"
+      stylesheet_link_tag "/assets/stylesheets/#{rtl? ? 'rtl-' : nil}#{filename}.css"
     else
-      stylesheet_link_tag fingerprinted("/assets/stylesheets/#{rtl? ? 'rtl/' : nil}", "#{filename}.css"), media: 'all'
+      file_prefix = rtl? ? 'rtl-' : nil
+      stylesheet_link_tag fingerprinted('/assets/stylesheets/', "#{filename}.css", file_prefix),
+                          media: 'all'
     end
   end
 
@@ -33,10 +52,10 @@ module ApplicationHelper
     end
   end
 
-  def fingerprinted(path, filename)
+  def fingerprinted(path, filename, file_prefix = nil)
     manifest_path = "#{Rails.root}/public/#{path}/rev-manifest.json"
     manifest = JSON.parse(File.read(File.expand_path(manifest_path, __FILE__)))
-    "#{path}#{manifest[filename]}"
+    "#{path}#{file_prefix}#{manifest[filename]}"
   end
 
   def class_for_path(req, path)
@@ -49,28 +68,9 @@ module ApplicationHelper
   def body_class(request)
     base_path = request.path.split('/')[1]
     return 'course-page' if base_path == 'courses'
-    survey_paths = %w(survey surveys rapidfire)
+    return 'campaign-path' if base_path == 'campaigns'
+    survey_paths = %w[survey surveys rapidfire]
     return 'survey-page' if survey_paths.include?(base_path)
     return 'fixed-nav'
-  end
-
-  ############################
-  # Rapidfire Survey patches #
-  ############################
-
-  # FIXME: document exactly why these monkey patches are needed, or get
-  # rid of them if possible.
-
-  def method_missing(method, *args, &block)
-    # puts "LOOKING FOR ROUTES #{method}"
-    return super unless method.to_s.end_with?('_path', '_url')
-    return super unless main_app.respond_to?(method)
-    main_app.send(method, *args)
-  end
-
-  def respond_to?(method, include_all=false)
-    return super unless method.to_s.end_with?('_path', '_url')
-    return super unless main_app.respond_to?(method)
-    true
   end
 end

@@ -1,16 +1,18 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import DiffViewer from './diff_viewer.jsx';
 
-const Revision = React.createClass({
+const Revision = createReactClass({
   displayName: 'Revision',
 
   propTypes: {
-    revision: React.PropTypes.object
+    revision: PropTypes.object
   },
 
   render() {
-    let ratingClass = `rating ${this.props.revision.rating}`;
-    let ratingMobileClass = `${ratingClass} tablet-only`;
+    const ratingClass = `rating ${this.props.revision.rating}`;
+    const ratingMobileClass = `${ratingClass} tablet-only`;
 
     return (
       <tr className="revision">

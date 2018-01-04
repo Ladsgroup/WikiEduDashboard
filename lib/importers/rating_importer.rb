@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #= Imports and updates ratings for articles
 class RatingImporter
   ################
@@ -19,11 +20,21 @@ class RatingImporter
 
   def self.update_new_ratings
     wiki_id = en_wiki.id # English Wikipedia only, see above.
-    articles = Article.current
-                      .where(rating_updated_at: nil).namespace(0)
-                      .where(wiki_id: wiki_id)
-                      .find_in_batches(batch_size: 30)
-    update_ratings(articles)
+    edited_articles = Article.current
+                             .where(rating_updated_at: nil).namespace(0)
+                             .where(wiki_id: wiki_id)
+                             .find_in_batches(batch_size: 30)
+    update_ratings(edited_articles)
+    assigned_articles = Article.assigned
+                               .where(rating_updated_at: nil).namespace(0)
+                               .where(wiki_id: wiki_id)
+                               .find_in_batches(batch_size: 30)
+    update_ratings(assigned_articles)
+  end
+
+  def self.update_rating_for_article(article)
+    return unless article.wiki_id == en_wiki.id # English Wikipedia only, see above.
+    update_ratings([[article]])
   end
 
   ##############
@@ -31,10 +42,10 @@ class RatingImporter
   ##############
   def self.update_ratings(article_groups)
     require './lib/wiki_api'
-    article_groups.with_index do |articles, _batch|
+    article_groups.each do |articles|
       titles = articles.map(&:title)
       # NOTE: English Wikipedia only, per above.
-      ratings = WikiApi.new(en_wiki).get_article_rating(titles).inject(&:merge)
+      ratings = WikiApi.new(en_wiki).get_article_rating(titles)
       next if ratings.blank?
       update_article_ratings(articles, ratings)
     end

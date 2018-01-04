@@ -18,7 +18,8 @@ gulp.task('webpack', ['bower'], (cb) => {
     styleguide: [`${jsSource}/styleguide/styleguide.jsx`],
     survey: [`${jsSource}/surveys/survey.js`],
     survey_admin: [`${jsSource}/surveys/survey-admin.js`],
-    survey_results: [`${jsSource}/surveys/survey-results.js`]
+    survey_results: [`${jsSource}/surveys/survey-results.jsx`],
+    campaigns: [`${jsSource}/campaigns.js`]
   };
 
   // Set up plugins based on dev/prod mode
@@ -58,27 +59,20 @@ gulp.task('webpack', ['bower'], (cb) => {
     entry: entries,
     stats: 'errors-only',
     output: {
-      path: doHot ? path.resolve(appRoot, `${config.outputPath}/${config.jsDirectory}`) : `${config.outputPath}/${config.jsDirectory}`,
+      path: doHot ? path.resolve(appRoot, `${config.outputPath}/${config.jsDirectory}`) : path.resolve(`${config.outputPath}/${config.jsDirectory}`),
       filename: doHot ? '[name].js' : '[name].[hash].js'
     },
     resolve: {
-      extension: ['', '.js', '.jsx', '.coffee', '.cjsx'],
-      root: [path.resolve(appRoot, 'vendor'), path.resolve(appRoot, 'node_modules')]
+      extensions: ['.js', '.jsx'],
     },
     module: {
       loaders: [{
         test: /\.jsx?$/,
-        exclude: [/vendor/, /node_modules/],
-        loader: 'babel',
+        exclude: [/vendor/, /node_modules(?!\/striptags)/],
+        loader: 'babel-loader',
         query: {
           cacheDirectory: true
         }
-      }, {
-        test: /\.coffee$/,
-        loaders: ['coffee-loader']
-      }, {
-        test: /\.cjsx$/,
-        loaders: ['coffee', 'cjsx']
       }, {
         test: /\.json$/,
         loader: 'json-loader'
@@ -89,7 +83,7 @@ gulp.task('webpack', ['bower'], (cb) => {
       'i18n-js': 'I18n'
     },
     plugins: wpPlugins,
-    devtool: config.development ? 'cheap-module-eval-source-map' : 'source-map'
+    devtool: config.development ? 'eval' : 'source-map'
   };
 
   const wp = webpack(wpConf);

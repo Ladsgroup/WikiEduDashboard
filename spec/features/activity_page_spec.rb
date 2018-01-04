@@ -1,11 +1,8 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'activity page', type: :feature, js: true do
-  before do
-    Capybara.current_driver = :poltergeist
-  end
-
   before :each do
     login_as(user, scope: :user)
     visit '/'
@@ -27,7 +24,7 @@ describe 'activity page', type: :feature, js: true do
     let!(:user)    { create(:user) }
     let!(:user2)   { create(:user, username: 'User2') }
     let(:course)   { create(:course, end: 1.year.from_now) }
-    let(:course2)  { create(:course, end: 1.year.from_now) }
+    let(:course2)  { create(:course, end: 1.year.from_now, slug: 'foo/2') }
     let!(:cu1)     { create(:courses_user, user_id: user.id, course_id: course.id) }
     let!(:cu2)     { create(:courses_user, user_id: user2.id, course_id: course2.id) }
     let!(:cu3)     { create(:courses_user, user_id: admin.id, course_id: course.id) }

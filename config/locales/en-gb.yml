@@ -1,8 +1,10 @@
 # Messages for British English (British English)
 # Exported from translatewiki.net
 # Export driver: phpyaml
+# Author: Baloch Khan
 # Author: Chase me ladies, I'm the Cavalry
 # Author: Codynguyen1116
+# Author: Pierpao
 ---
 en-gb:
   application:
@@ -96,6 +98,7 @@ en-gb:
     view_all: View All
     view_doc: The sum of all views to each article during the course term
     views_added: Added %{count} new views for %{title}
+    wiki: Wiki
   assignments:
     already_exists: This assignment already exists!
     assignees: Assignee(s)
@@ -228,7 +231,7 @@ en-gb:
       all students who overdue for completing assigned training modules. Are you sure
       you want to do this?
     no_available_actions: No available actions
-    overview: Overview
+    overview: Home
     passcode: Passcode
     passcode_none: No passcode
     passcode_prompt: Enter the passcode given to you by your instructor for this course
@@ -246,6 +249,7 @@ en-gb:
     students: Students
     students_count: '# Students'
     student_editors: Student Editors
+    timeline_enabled: Timeline enabled
   recent_activity:
     active_courses: Artículo es activo en
     datetime: La fecha/El tiempo

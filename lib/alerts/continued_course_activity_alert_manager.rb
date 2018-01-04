@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class ContinuedCourseActivityAlertManager
   def initialize(courses)
     @courses = courses
@@ -6,13 +7,16 @@ class ContinuedCourseActivityAlertManager
 
   def create_alerts
     @courses.each do |course|
+      next if Alert.exists?(course_id: course.id,
+                            type: 'ContinuedCourseActivityAlert',
+                            resolved: false)
+
       next if course.students.empty?
-      next if Alert.exists?(course_id: course.id, type: 'ContinuedCourseActivityAlert')
 
       next unless significant_activity_after_course_end?(course)
 
       alert = Alert.create(type: 'ContinuedCourseActivityAlert', course_id: course.id)
-      alert.email_course_admins
+      alert.email_content_expert
     end
   end
 

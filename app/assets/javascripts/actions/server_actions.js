@@ -1,6 +1,6 @@
 import McFly from 'mcfly';
 const Flux = new McFly();
-import API from '../utils/api.coffee';
+import API from '../utils/api.js';
 import _ from 'lodash';
 
 const ServerActions = Flux.createActions({
@@ -24,13 +24,6 @@ const ServerActions = Flux.createActions({
     const actionType = `${model.toUpperCase()}_MODIFIED`;
     return API.modify(model, courseId, data, false)
       .then(resp => ({ actionType, data: resp }))
-      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
-  },
-
-  // Specific
-  cloneCourse(courseId) {
-    return API.cloneCourse(courseId)
-      .then(resp => ({ actionType: 'RECEIVE_COURSE_CLONE', data: resp }))
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   },
 
@@ -68,33 +61,22 @@ const ServerActions = Flux.createActions({
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   },
 
-  fetchCampaigns() {
-    return API.fetchCampaigns()
-      .then(resp => ({ actionType: 'RECEIVE_CAMPAIGNS', data: resp }))
-      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
-  },
-
   fetchRevisions(studentId, courseId) {
     return API.fetchRevisions(studentId, courseId)
       .then(resp => ({ actionType: 'RECEIVE_REVISIONS', data: resp }))
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   },
 
-  fetchArticleDetails(articleId, courseId) {
-    return API.fetchArticleDetails(articleId, courseId)
-      .then(resp => ({ actionType: 'RECEIVE_ARTICLE_DETAILS', data: resp }))
+  fetchCourseRevisions(courseId, limit) {
+    const actionType = 'RECEIVE_REVISIONS';
+    return API.fetchCourseRevisions(courseId, limit)
+      .then(resp => ({ actionType, data: resp }))
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   },
 
   fetchTrainingStatus(studentId, courseId) {
     return API.fetchTrainingStatus(studentId, courseId)
       .then(resp => ({ actionType: 'RECEIVE_TRAINING_MODULES', data: resp }))
-      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
-  },
-
-  fetchDYKArticles(opts = {}) {
-    return API.fetchDykArticles(opts)
-      .then(resp => ({ actionType: 'RECEIVE_DYK', data: resp }))
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   },
 
@@ -134,12 +116,6 @@ const ServerActions = Flux.createActions({
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   },
 
-  fetchCoursesForUser(userId) {
-    return API.fetchUserCourses(userId)
-      .then(resp => ({ actionType: 'RECEIVE_USER_COURSES', data: resp }))
-      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
-  },
-
   fetchAllTrainingModules() {
     return API.fetchAllTrainingModules()
       .then(resp => ({ actionType: 'RECEIVE_ALL_TRAINING_MODULES', data: resp }))
@@ -159,11 +135,14 @@ const ServerActions = Flux.createActions({
   },
 
   // Save
-  saveCourse(data, courseId = null) {
+  saveCourse(data, courseId = null, failureCallback) {
     const actionType = courseId === null ? 'CREATED_COURSE' : 'SAVED_COURSE';
     return API.saveCourse(data, courseId)
       .then(resp => ({ actionType, data: resp }))
-      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
+      .catch((resp) => {
+        if (failureCallback) { failureCallback(); }
+        return { actionType: 'API_FAIL', data: resp };
+      });
   },
 
   updateClone(data, courseId) {
@@ -178,12 +157,6 @@ const ServerActions = Flux.createActions({
 
   saveTimeline(data, courseId) {
     return API.saveTimeline(courseId, data)
-      .then(resp => ({ actionType: 'SAVED_TIMELINE', data: resp }))
-      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
-  },
-
-  saveGradeables(data, courseId) {
-    return API.saveGradeables(courseId, data)
       .then(resp => ({ actionType: 'SAVED_TIMELINE', data: resp }))
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   },
@@ -222,9 +195,27 @@ const ServerActions = Flux.createActions({
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   },
 
+  linkToSalesforce(courseId, salesforceId) {
+    return API.linkToSalesforce(courseId, salesforceId)
+      .then(resp => ({ actionType: 'LINKED_TO_SALESFORCE', data: resp }))
+      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
+  },
+
+  updateSalesforceRecord(courseId) {
+    return API.updateSalesforceRecord(courseId)
+      .then(resp => ({ actionType: 'UPDATED_SALESFORCE_RECORD', data: resp }))
+      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
+  },
+
   notifyOverdue(courseId) {
     return API.notifyOverdue(courseId)
       .then(resp => ({ actionType: 'NOTIFIED_OVERDUE', data: resp }))
+      .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
+  },
+
+  greetStudents(courseId) {
+    return API.greetStudents(courseId)
+      .then(resp => ({ actionType: 'GREETED_STUDENTS', data: resp }))
       .catch(resp => ({ actionType: 'API_FAIL', data: resp }));
   }
 });

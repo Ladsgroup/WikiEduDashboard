@@ -1,12 +1,17 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import { browserHistory } from 'react-router';
-import API from '../../utils/api.coffee';
-import NotificationActions from '../../actions/notification_actions.js';
+import { connect } from "react-redux";
 
-const Form = React.createClass({
+import API from '../../utils/api.js';
+import { addNotification } from '../../actions/notification_actions.js';
+
+const Form = createReactClass({
   propTypes: {
-    currentUser: React.PropTypes.object,
-    returnToParam: React.PropTypes.string
+    currentUser: PropTypes.object,
+    returnToParam: PropTypes.string,
+    addNotification: PropTypes.func
   },
 
   getInitialState() {
@@ -42,8 +47,8 @@ const Form = React.createClass({
       return browserHistory.push(`/onboarding/permissions?return_to=${decodeURIComponent(this.props.returnToParam)}`);
     }
     )
-    .catch(function () {
-      NotificationActions.addNotification({
+    .catch(() => {
+      this.props.addNotification({
         message: I18n.t('error_500.explanation'),
         closable: true,
         type: 'error'
@@ -53,17 +58,17 @@ const Form = React.createClass({
   },
 
   render() {
-    let submitText = this.state.sending ? 'Sending' : 'Submit';
-    let disabled = this.state.sending;
+    const submitText = this.state.sending ? 'Sending' : 'Submit';
+    const disabled = this.state.sending;
     return (
       <div className="form">
         <h1>Let’s get some business out of the way.</h1>
         <form className="panel" onSubmit={this._handleSubmit} ref="form">
           <div className="form-group">
-            <label>Full name <span className="form-required-indicator">*</span></label>
+            <label>First and last name <span className="form-required-indicator">*</span></label>
             <input required className="form-control" type="text" name="name" defaultValue={this.state.name} onChange={this._handleFieldChange.bind(this, 'name')} />
             <p className="form-help-text">
-              Your real name is not public. Its only seen by you, your instructor, and Wiki Ed admins.
+              Your real name is not public. It is only seen by you, your instructor, and Wiki Ed admins.
             </p>
           </div>
           <div className="form-group">
@@ -91,7 +96,7 @@ const Form = React.createClass({
             </div>
           </div>
           <button disabled={disabled} type="submit" className="button dark right">
-            {submitText} <i className="icon icon-rt_arrow"></i>
+            {submitText} <i className="icon icon-rt_arrow" />
           </button>
         </form>
       </div>
@@ -99,4 +104,6 @@ const Form = React.createClass({
   }
 });
 
-export default Form;
+const mapDispatchToProps = { addNotification };
+
+export default connect(null, mapDispatchToProps)(Form);

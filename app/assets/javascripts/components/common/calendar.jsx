@@ -1,6 +1,10 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import DayPicker from 'react-day-picker';
-import WeekdayPicker from 'react-weekday-picker';
+import _ from 'lodash';
+
+import WeekdayPicker from './weekday_picker.jsx';
 import CourseActions from '../../actions/course_actions.js';
 import CourseDateUtils from '../../utils/course_date_utils.js';
 
@@ -8,14 +12,14 @@ function __in__(needle, haystack) {
   return haystack.indexOf(needle) >= 0;
 }
 
-const Calendar = React.createClass({
+const Calendar = createReactClass({
   displayName: 'Calendar',
   propTypes: {
-    course: React.PropTypes.object,
-    weeks: React.PropTypes.array,
-    calendarInstructions: React.PropTypes.string,
-    editable: React.PropTypes.bool,
-    shouldShowSteps: React.PropTypes.bool
+    course: PropTypes.object,
+    weeks: PropTypes.array,
+    calendarInstructions: PropTypes.string,
+    editable: PropTypes.bool,
+    shouldShowSteps: PropTypes.bool
   },
 
   getInitialState() {
@@ -82,7 +86,7 @@ const Calendar = React.createClass({
     return start < day && day < end;
   },
   render() {
-    let modifiers = {
+    const modifiers = {
       ['outrange']: day => {
         return !this.inrange(day);
       },
@@ -119,8 +123,8 @@ const Calendar = React.createClass({
       }
     };
 
-    let editDaysText = I18n.t('courses.calendar.select_meeting_days');
-    let editCalendarText = this.props.calendarInstructions;
+    const editDaysText = I18n.t('courses.calendar.select_meeting_days');
+    const editCalendarText = this.props.calendarInstructions;
 
     let editingDays;
     let editingCalendar;
@@ -139,8 +143,8 @@ const Calendar = React.createClass({
     }
 
 
-    let onWeekdayClick = this.props.editable ? this.selectWeekday : null;
-    let onDayClick = this.props.editable ? this.selectDay : null;
+    const onWeekdayClick = this.props.editable ? this.selectWeekday : null;
+    const onDayClick = this.props.editable ? this.selectDay : null;
 
     return (
       <div>
@@ -158,7 +162,6 @@ const Calendar = React.createClass({
             <DayPicker
               modifiers={modifiers}
               onDayClick={onDayClick}
-              onWeekdayClick={onWeekdayClick}
               initialMonth={this.state.initialMonth}
             />
             <div className="course-dates__calendar-key">

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 def create_course
@@ -37,8 +38,8 @@ describe 'timeline editing', type: :feature, js: true do
   let(:unassigned_module_name) { 'Editing Basics' }
 
   before do
-    include Devise::TestHelpers, type: :feature
-    Capybara.current_driver = :poltergeist
+    include type: :feature
+    include Devise::TestHelpers
     page.current_window.resize_to(1920, 1080)
 
     create_course
@@ -46,11 +47,33 @@ describe 'timeline editing', type: :feature, js: true do
     stub_oauth_edit
   end
 
+  it 'lets users add a training to an assignment block' do
+    visit "/courses/#{Course.last.slug}/timeline"
+
+    # Interact with training modules within a block
+    find('.week-1').hover
+    sleep 0.5
+    within('.week-1') do
+      find('.block__edit-block', match: :first).click
+    end
+    sleep 1
+    within(".week-1 .block-kind-#{Block::KINDS['assignment']}") do
+      find('div.Select--multi').send_keys(unassigned_module_name, :enter)
+    end
+
+    within('.block__block-actions') { click_button 'Save' }
+
+    within ".week-1 .block-kind-#{Block::KINDS['assignment']}" do
+      expect(page).to have_content unassigned_module_name
+    end
+    sleep 1
+  end
+
   it 'lets users delete a week' do
     visit "/courses/#{Course.first.slug}/timeline"
     expect(page).not_to have_content 'Add Assignment'
     accept_confirm do
-      find('span.week__delete-week').click
+      find('button.week__delete-week').click
     end
     expect(page).to have_content 'Add Assignment'
     sleep 1
@@ -69,28 +92,6 @@ describe 'timeline editing', type: :feature, js: true do
     end
 
     expect(page).not_to have_content 'Block Title'
-    sleep 1
-  end
-
-  it 'lets users add a training to an assignment block' do
-    visit "/courses/#{Course.last.slug}/timeline"
-
-    # Interact with training modules within a block
-    find('.week-1').hover
-    sleep 0.5
-    within('.week-1') do
-      find('.block__edit-block', match: :first).click
-    end
-    sleep 1
-    within(".week-1 .block-kind-#{Block::KINDS['assignment']}") do
-      find('.Select-control input').set(unassigned_module_name[0..5])
-      find('.Select-menu-outer .Select-option', text: unassigned_module_name).click
-    end
-    within('.block__block-actions') { click_button 'Save' }
-
-    within ".week-1 .block-kind-#{Block::KINDS['assignment']}" do
-      expect(page).to have_content unassigned_module_name
-    end
     sleep 1
   end
 
@@ -141,7 +142,7 @@ describe 'timeline editing', type: :feature, js: true do
   it 'lets users add a block' do
     visit "/courses/#{Course.first.slug}/timeline"
     expect(Block.count).to eq(2)
-    find('span.week__add-block').click
+    find('button.week__add-block').click
     click_button 'Save'
     sleep 1
     expect(Block.count).to eq(3)

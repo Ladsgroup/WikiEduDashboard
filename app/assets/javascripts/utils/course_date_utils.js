@@ -1,11 +1,13 @@
+import _ from 'lodash';
+
 const CourseDateUtils = {
   validationRegex() {
     // Matches YYYY-MM-DD
-    return /^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/;
+    return /^\d{4}-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])$/;
   },
 
   isDateValid(date) {
-    return /^20\d{2}\-\d{2}\-\d{2}/.test(date) && moment(date).isValid();
+    return /^20\d{2}-\d{2}-\d{2}/.test(date) && moment(date).isValid();
   },
 
 
@@ -84,8 +86,7 @@ const CourseDateUtils = {
 
   moreWeeksThanAvailable(course, weeks, exceptions) {
     if (!weeks || !weeks.length) { return false; }
-    const nonBlackoutWeeks = _.filter(this.weekMeetings(this.meetings(course), course, exceptions), mtg => mtg !== '()'
-    );
+    const nonBlackoutWeeks = _.filter(this.weekMeetings(this.meetings(course), course, exceptions), mtg => mtg !== '()');
     return weeks.length > nonBlackoutWeeks.length;
   },
 
@@ -98,6 +99,12 @@ const CourseDateUtils = {
       if (this.courseMeets(course.weekdays, i, wkDay, exceptions.join(','))) { return noMeetingsThisWeek = false; }
     });
     return noMeetingsThisWeek;
+  },
+
+  weeksBeforeTimeline(course) {
+    const courseStart = moment(course.start).startOf('week');
+    const timelineStart = moment(course.timeline_start).startOf('week');
+    return timelineStart.diff(courseStart, 'week');
   },
 
   // Returns string describing weekday meetings for each week

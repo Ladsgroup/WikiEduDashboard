@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "#{Rails.root}/lib/wiki_response"
 
 #= Class for making edits to Wikipedia via OAuth, using a user's credentials
@@ -14,6 +15,7 @@ class WikiEdits
   #######################
   def oauth_credentials_valid?(current_user)
     get_tokens(current_user)
+    current_user.touch
     current_user.wiki_token != 'invalid'
   end
 
@@ -32,14 +34,10 @@ class WikiEdits
     # to Sentry.
     Raven.capture_message 'WikiEdits.notify_untrained',
                           level: 'info',
-                          culprit: 'WikiEdits.notify_untrained',
+                          transaction: 'WikiEdits.notify_untrained',
                           extra: { sender: current_user.username,
                                    course_name: course.slug,
                                    untrained_count: untrained_users.count }
-  end
-
-  def notify_user(sender, recipient, message)
-    add_new_section(sender, recipient.talk_page, message)
   end
 
   ####################
@@ -111,13 +109,19 @@ class WikiEdits
 
   def get_tokens(current_user)
     return { status: 'no current user' } unless current_user
+
+    # Request a CSRF token for the user
     @access_token = oauth_access_token(current_user)
     get_token = @access_token.get("#{@api_url}?action=query&meta=tokens&format=json")
 
+    # Handle 5XX response for when MediaWiki API is down
+    handle_mediawiki_server_errors(get_token) { return { status: 'failed' } }
+
+    # Handle Mediawiki API response
     token_response = JSON.parse(get_token.body)
-    WikiResponse.capture(token_response, current_user: current_user,
-                                         type: 'tokens')
+    WikiResponse.capture(token_response, current_user: current_user, type: 'tokens')
     return { status: 'failed' } unless token_response.key?('query')
+
     OpenStruct.new(csrf_token: token_response['query']['tokens']['csrftoken'],
                    access_token: @access_token)
   end
@@ -134,5 +138,11 @@ class WikiEdits
     OAuth::AccessToken.new oauth_consumer,
                            current_user.wiki_token,
                            current_user.wiki_secret
+  end
+
+  def handle_mediawiki_server_errors(response)
+    return unless response.code =~ /^5../
+    Raven.capture_message('Wikimedia API is down')
+    yield
   end
 end

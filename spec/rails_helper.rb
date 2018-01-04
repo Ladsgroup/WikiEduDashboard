@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV['RAILS_ENV'] ||= 'test'
 # Load spec_helper before rails, so that simplecov works properly.
@@ -12,23 +13,17 @@ require 'capybara/rspec'
 require 'capybara-screenshot/rspec'
 require 'capybara/poltergeist'
 
+url_blacklist = ['https://wikiedu.org', 'https://fonts.googleapis.com', 'http://sentry.example.com']
+Capybara.register_driver :poltergeist do |app|
+  Capybara::Poltergeist::Driver.new(app, js_errors: true, url_blacklist: url_blacklist, timeout: 60)
+end
+
 Capybara.configure do |config|
-  config.javascript_driver = :webkit
+  config.javascript_driver = :poltergeist
   config.default_max_wait_time = 10
 end
 
-Capybara.register_driver :poltergeist do |app|
-  Capybara::Poltergeist::Driver.new(app, js_errors: true)
-end
-
-Capybara::Webkit.configure do |config|
-  config.allow_url 'fonts.googleapis.com'
-  config.allow_url 'maxcdn.bootstrapcdn.com'
-  config.allow_url 'cdn.ravenjs.com'
-  config.block_unknown_urls
-end
-
-Capybara::Screenshot.webkit_options = { width: 1400, height: 768 }
+Rails.cache.clear
 Capybara::Screenshot.prune_strategy = :keep_last_run
 Capybara.save_path = 'tmp/screenshots/'
 
@@ -81,6 +76,15 @@ RSpec.configure do |config|
 
   config.include Warden::Test::Helpers
   Warden.test_mode!
+
+  config.before(:each) do
+    stub_request(:get, 'https://wikiedu.org/feed')
+      .with(headers: { 'Accept' => '*/*', 'User-Agent' => 'Ruby' })
+      .to_return(status: 200, body: '<rss version="2.0" />', headers: {})
+    stub_request(:get, /fonts.googleapis.com/)
+      .with(headers: { 'Accept' => '*/*', 'User-Agent' => 'Ruby' })
+      .to_return(status: 200, body: +'@font-face {}', headers: {})
+  end
 end
 
 Shoulda::Matchers.configure do |config|
@@ -94,5 +98,16 @@ Shoulda::Matchers.configure do |config|
     with.library :action_controller
     # Or, choose the following (which implies all of the above):
     with.library :rails
+  end
+end
+
+# This lets us switch between Poltergeist and Selenium without changing the spec.
+# Some .click actions don't work on Poltergeist because of overlapping elements,
+# but .trigger('click') is only available in Poltergeist.
+def omniclick(node)
+  if Capybara.current_driver == :poltergeist
+    node.trigger('click')
+  else
+    node.click
   end
 end

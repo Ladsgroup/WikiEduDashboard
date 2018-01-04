@@ -1,27 +1,29 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import InputMixin from '../../mixins/input_mixin.js';
 import Conditional from '../high_order/conditional.jsx';
 
-const TextInput = React.createClass({
+const TextInput = createReactClass({
   displayName: 'TextInput',
 
   propTypes: {
-    value: React.PropTypes.string,
-    value_key: React.PropTypes.string,
-    editable: React.PropTypes.bool,
-    label: React.PropTypes.string,
-    placeholder: React.PropTypes.string,
-    spacer: React.PropTypes.string,
-    valueClass: React.PropTypes.string,
-    p_tag_classname: React.PropTypes.string,
-    inline: React.PropTypes.bool,
-    type: React.PropTypes.string,
-    max: React.PropTypes.string,
-    maxLength: React.PropTypes.string,
-    focus: React.PropTypes.func,
-    onBlur: React.PropTypes.func,
-    onClick: React.PropTypes.func,
-    append: React.PropTypes.node
+    value: PropTypes.string,
+    value_key: PropTypes.string,
+    editable: PropTypes.bool,
+    label: PropTypes.string,
+    placeholder: PropTypes.string,
+    spacer: PropTypes.string,
+    valueClass: PropTypes.string,
+    p_tag_classname: PropTypes.string,
+    inline: PropTypes.bool,
+    type: PropTypes.string,
+    max: PropTypes.string,
+    maxLength: PropTypes.string,
+    focus: PropTypes.func,
+    onBlur: PropTypes.func,
+    onClick: PropTypes.func,
+    append: PropTypes.node
     // validation: Regex used by Conditional
     // required: bool used by Conditional
   },
@@ -51,14 +53,14 @@ const TextInput = React.createClass({
     if (this.props.valueClass) { valueClass += this.props.valueClass; }
 
     if (this.props.editable) {
-      let title;
       let labelClass = '';
-      let inputClass = this.props.inline ? ' inline' : '';
+      let inputClass = this.props.inline ? 'inline' : '';
       if (this.state.invalid) {
         labelClass += 'red';
-        inputClass += 'invalid';
+        inputClass += ' invalid';
       }
 
+      let title;
       if (this.props.type === 'number') {
         title = I18n.t('accessibility.number_field');
       }
@@ -68,12 +70,11 @@ const TextInput = React.createClass({
       // of a course, which combines three TextInput values, will not exceed
       // the maximum string size of 255.
       const maxLength = this.props.maxLength || '75';
-      let input = (
+      const input = (
         <input
-          ref="input"
           className={className}
           id={this.state.id}
-          value={this.state.value}
+          value={this.state.value || ''}
           onChange={this.onChange}
           autoFocus={this.props.focus}
           onFocus={this.focus}

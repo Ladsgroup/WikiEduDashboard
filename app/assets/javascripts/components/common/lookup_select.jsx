@@ -1,12 +1,14 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import LookupWrapper from '../high_order/lookup_wrapper.jsx';
 
-const LookupSelect = React.createClass({
+const LookupSelect = createReactClass({
   displayName: 'LookupSelect',
 
   propTypes: {
-    placeholder: React.PropTypes.string,
-    models: React.PropTypes.array
+    placeholder: PropTypes.string,
+    models: PropTypes.array
   },
   getValue() {
     return this.refs.entry.value;
@@ -15,8 +17,8 @@ const LookupSelect = React.createClass({
     return this.refs.entry.value = 'placeholder';
   },
   render() {
-    let placeholder = `Select a ${this.props.placeholder}` || 'Select one';
-    let options = this.props.models.map((model) => {
+    const placeholder = `Select a ${this.props.placeholder}` || 'Select one';
+    const options = this.props.models.map((model) => {
       return <option value={model} key={model}>{model}</option>;
     });
 

@@ -1,16 +1,18 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import TrainingActions from '../actions/training_actions.js';
 const md = require('../../utils/markdown_it.js').default();
 
-const Quiz = React.createClass({
+const Quiz = createReactClass({
   displayName: 'Quiz',
 
   propTypes: {
-    selectedAnswerId: React.PropTypes.number,
-    correctAnswer: React.PropTypes.number,
-    selectedAnswer: React.PropTypes.number,
-    answers: React.PropTypes.array,
-    question: React.PropTypes.string
+    selectedAnswerId: PropTypes.number,
+    correctAnswer: PropTypes.number,
+    selectedAnswer: PropTypes.number,
+    answers: PropTypes.array,
+    question: PropTypes.string
   },
 
   getInitialState() {
@@ -35,7 +37,6 @@ const Quiz = React.createClass({
     return this.setSelectedAnswer(this.state.selectedAnswerId);
   },
 
-
   correctStatus(answer) {
     if (this.props.correctAnswer === answer) {
       return ' correct';
@@ -51,12 +52,12 @@ const Quiz = React.createClass({
   },
 
   render() {
-    let answers = this.props.answers.map((answer, i) => {
+    const answers = this.props.answers.map((answer, i) => {
       let explanationClass = 'assessment__answer-explanation';
       explanationClass += this.correctStatus(answer.id);
       explanationClass += this.visibilityStatus(answer.id);
-      let defaultChecked = parseInt(this.props.selectedAnswer) === answer.id;
-      let checked = this.state.selectedAnswerId ? parseInt(this.state.selectedAnswerId) === answer.id : defaultChecked;
+      const defaultChecked = parseInt(this.props.selectedAnswer) === answer.id;
+      const checked = this.state.selectedAnswerId ? parseInt(this.state.selectedAnswerId) === answer.id : defaultChecked;
       let liClass = this.visibilityStatus(answer.id) === ' shown' ? ' revealed' : undefined;
       liClass += this.correctStatus(answer.id);
       const rawExplanationHtml = md.render(answer.explanation);
@@ -67,7 +68,6 @@ const Quiz = React.createClass({
               <input
                 onChange={this.setAnswer}
                 data-answer-id={answer.id}
-                defaultChecked={defaultChecked}
                 checked={checked}
                 type="radio"
                 name="answer"
@@ -75,7 +75,7 @@ const Quiz = React.createClass({
             </div>
             {answer.text}
           </label>
-          <div className={explanationClass} dangerouslySetInnerHTML={{ __html: rawExplanationHtml }}></div>
+          <div className={explanationClass} dangerouslySetInnerHTML={{ __html: rawExplanationHtml }} />
         </li>
       );
     });
@@ -92,9 +92,6 @@ const Quiz = React.createClass({
       </form>
     );
   }
-}
-
-
-);
+});
 
 export default Quiz;

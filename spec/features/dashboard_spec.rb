@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'dashboard', type: :feature, js: true do
@@ -6,10 +7,6 @@ describe 'dashboard', type: :feature, js: true do
     create(:user,
            onboarded: true, real_name: 'test',
            email: 'email@email.com', permissions: permissions)
-  end
-
-  before do
-    Capybara.current_driver = :poltergeist
   end
 
   context 'with no courses' do
@@ -134,7 +131,7 @@ describe 'dashboard', type: :feature, js: true do
              title: 'Recent Title',
              school: 'University',
              term: 'Term',
-             slug: 'University/Course_(Term)',
+             slug: 'University/Course2_(Term)',
              submitted: false,
              passcode: 'passcode',
              start: Time.now,
@@ -148,6 +145,29 @@ describe 'dashboard', type: :feature, js: true do
       expect(page).to have_content 'Archived Title'
       expect(page).to have_content 'Your Courses'
       expect(page).to have_content 'Recent Title'
+    end
+  end
+
+  context 'campaigns' do
+    let(:permissions) { User::Permissions::NONE }
+
+    before do
+      create(:campaign) # arbitrary campaign
+      login_as(user, scope: :user)
+    end
+
+    it "should not show a campaigns section if the user isn't organizing any campaigns" do
+      visit root_path
+      expect(page).to_not have_content(I18n.t('campaign.campaigns'))
+    end
+
+    it 'should list campaigns the user organizes' do
+      campaign = create(:campaign, title: 'My awesome campaign')
+      create(:campaigns_user, user_id: user.id,
+                              campaign_id: campaign.id,
+                              role: CampaignsUsers::Roles::ORGANIZER_ROLE)
+      visit root_path
+      expect(page).to have_content(campaign.title)
     end
   end
 end

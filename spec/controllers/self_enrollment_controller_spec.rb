@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe SelfEnrollmentController do
@@ -31,6 +32,7 @@ describe SelfEnrollmentController do
       context 'when the course is approved' do
         before do
           course.campaigns << Campaign.first
+          stub_add_user_to_channel_success
         end
 
         context 'when the user is not enrolled yet' do
@@ -45,19 +47,41 @@ describe SelfEnrollmentController do
           end
         end
 
-        context 'when the user is enrolled as an instructor' do
-          before do
-            create(:courses_user,
-                   course_id: course.id,
-                   user_id: user.id,
-                   role: CoursesUsers::Roles::INSTRUCTOR_ROLE)
-          end
+        context 'when type is ClassroomProgramCourse' do
+          context 'when the user is enrolled as an instructor' do
+            before do
+              create(:courses_user,
+                     course_id: course.id,
+                     user_id: user.id,
+                     role: CoursesUsers::Roles::INSTRUCTOR_ROLE)
+            end
 
-          it 'redirects without enrolling the user' do
-            expect_any_instance_of(WikiCourseEdits).not_to receive(:enroll_in_course)
-            get 'enroll_self', params: request_params
-            expect(subject).to eq(302)
-            expect(course.students.count).to eq(0)
+            it 'redirects without enrolling the user' do
+              expect_any_instance_of(WikiCourseEdits).not_to receive(:enroll_in_course)
+              get 'enroll_self', params: request_params
+              expect(subject).to eq(302)
+              expect(course.students.count).to eq(0)
+            end
+          end
+        end
+
+        context 'when type is Editathon' do
+          let(:course) { create(:editathon, end: Time.zone.today + 1.week) }
+
+          context 'when the user is enrolled as a facilitator' do
+            before do
+              create(:courses_user,
+                     course_id: course.id,
+                     user_id: user.id,
+                     role: CoursesUsers::Roles::INSTRUCTOR_ROLE)
+            end
+
+            it 'enrolls user (and redirects) and updates the user count' do
+              stub_oauth_edit
+              get 'enroll_self', params: request_params
+              expect(subject).to eq(302)
+              expect(course.students.count).to eq(1)
+            end
           end
         end
 

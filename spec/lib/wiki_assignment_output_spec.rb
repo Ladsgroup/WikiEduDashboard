@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 require "#{Rails.root}/lib/wiki_edits"
 require "#{Rails.root}/lib/wiki_assignment_output"
@@ -27,9 +28,13 @@ describe WikiAssignmentOutput do
     create(:user, id: 3, username: 'Keï')
     create(:courses_user, user_id: 3, course_id: 10001)
   end
+  let(:templates) do
+    template_file_path = "config/templates/#{ENV['dashboard_url']}_#{course.home_wiki.language}.yml"
+    YAML.load_file(Rails.root + template_file_path)
+  end
 
   let(:wiki_assignment_output) do
-    WikiAssignmentOutput.new(course, title, talk_title, assignments)
+    WikiAssignmentOutput.new(course, title, talk_title, assignments, templates)
   end
   let(:course) { Course.find(10001) }
   let(:assignments) do
@@ -83,6 +88,46 @@ describe WikiAssignmentOutput do
                  .build_assignment_page_content(assignment_tag,
                                                 initial_talk_page_content)
         expected_output = talk_page_templates + assignment_tag + "\n" + additional_talk_content
+        expect(output).to eq(expected_output)
+      end
+
+      it 'puts assignment templates after a nested template like {{WikiProject banner shell}} ends' do
+        assignment_tag = '{{template|foo=bar}}'
+        initial_talk_page_content = <<~KANYEWESTTALK
+          {{Talk header}}
+          {{Controversial}}
+          {{User:MiszaBot/config
+            | algo=old(90d)
+            | archive=Talk:Kanye West/Archive %(counter)d
+            | counter=1
+            | maxarchivesize=75K
+            | archiveheader={{Automatic archive navigator}}
+            | minthreadsleft=5
+            | minthreadstoarchive=2
+          }}
+          {{Article history
+          |action1=GAN
+          |action1date=20:38, 27 April 2008 (UTC)
+          |action1link=Talk:Kanye West/Archive 2#GA review
+          |action1result=passed
+          |action1oldid=208600243
+          |currentstatus=GA
+          |topic=music
+          }}
+          {{WikiProject banner shell|collapsed=yes|blp=yes|1=
+          {{WikiProject Biography|living=yes|class=GA|musician-priority=Mid|listas=West, Kanye|musician-work-group=yes}}
+          {{WikiProject Hip hop|class=GA|importance=high}}
+          {{WikiProject Chicago|class=GA|importance=mid}}
+          {{WikiProject Illinois|class=GA|importance=Mid}}
+          {{WikiProject Record Production|class=GA|importance=High}}
+          }}
+          {{findnotice}}
+          {{high traffic|date=17 February 2016|url=/news/article-3450364/Loser-com-redirects-Kanye-s-Wikipedia-page-recent-string-Twitter-rants.html|notlinked=yes|site=Mail Online}}
+        KANYEWESTTALK
+        output = wiki_assignment_output
+                 .build_assignment_page_content(assignment_tag,
+                                                initial_talk_page_content)
+        expected_output = initial_talk_page_content + assignment_tag + "\n"
         expect(output).to eq(expected_output)
       end
 

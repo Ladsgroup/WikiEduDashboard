@@ -1,8 +1,10 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 require "#{Rails.root}/lib/importers/view_importer"
 
 describe ViewImporter do
+  before { stub_wiki_validation }
   describe '.update_views_for_article' do
     it 'should not fail if there are no revisions for an article' do
       VCR.use_cassette 'article/update_views_for_article' do
@@ -56,10 +58,19 @@ describe ViewImporter do
     end
 
     it 'works for non-default wikis' do
+      # Wiki lookup happens in a Thread. We must fake the database lookup,
+      # since the rspec database operations are done in-memory and are not
+      # available in other threads.
+      allow_any_instance_of(Article).to receive(:wiki).and_return(es_wiki)
+
       create(:article, id: 1, title: 'Wikipedia', namespace: 0,
                        wiki_id: es_wiki.id,
                        views_updated_at: Date.today - 2.days)
       stub_request(:get, %r{.*pageviews/per-article/es.wikipedia.*})
+        .to_return(
+          status: 200,
+          body: '{"items":[{"article":"Wikipedia","timestamp":"2017103100","views":6043}]}'
+        )
       ViewImporter.update_all_views
     end
   end

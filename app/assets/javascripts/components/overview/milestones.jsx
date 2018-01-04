@@ -1,4 +1,7 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import _ from 'lodash';
+
 import BlockStore from '../../stores/block_store.js';
 import WeekStore from '../../stores/week_store.js';
 import CourseStore from '../../stores/course_store.js';
@@ -11,7 +14,7 @@ const getState = () =>
   })
 ;
 
-const Milestones = React.createClass({
+const Milestones = createReactClass({
   displayName: I18n.t('blocks.milestones.title'),
 
   mixins: [BlockStore.mixin, WeekStore.mixin, CourseStore.mixin],
@@ -31,7 +34,7 @@ const Milestones = React.createClass({
   },
 
   render() {
-    let blocks = [];
+    const blocks = [];
     this.state.weeks.map(week => {
       const milestoneBlocks = _.filter(week.blocks, block => block.kind === this.milestoneBlockType);
       return milestoneBlocks.map(block => {
@@ -43,7 +46,7 @@ const Milestones = React.createClass({
           <div key={block.id} className="section-header">
             <div className={classNames}>
               <p>Week {week.order} {completionNote}</p>
-              <div className="markdown" dangerouslySetInnerHTML={{ __html: rawHtml }}></div>
+              <div className="markdown" dangerouslySetInnerHTML={{ __html: rawHtml }} />
               <hr />
             </div>
           </div>

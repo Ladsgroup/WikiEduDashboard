@@ -41,146 +41,23 @@
 #  home_wiki_id          :integer
 #  recent_revision_count :integer          default(0)
 #  needs_update          :boolean          default(FALSE)
+#  chatroom_id           :string(255)
+#  flags                 :text(65535)
+#  level                 :string(255)
+#  private               :boolean          default(FALSE)
 #
 
 require 'rails_helper'
-require "#{Rails.root}/lib/legacy_courses/legacy_course_importer"
 
 describe Course, type: :model do
-  it 'should update data for all courses on demand' do
-    VCR.use_cassette 'wiki/course_data' do
-      LegacyCourseImporter.update_all_courses(false, campaign: [351])
-
-      course = Course.first
-      course.update_cache
-
-      expect(course.term).to eq('Summer 2014')
-      expect(course.school).to eq('University of Oklahoma')
-      expect(course.user_count).to eq(12)
+  describe '.update_all_caches_concurrently' do
+    before do
+      create(:course, needs_update: true)
+      create(:course, needs_update: true, slug: 'foo/2')
     end
-  end
-
-  it 'should handle MediaWiki API errors' do
-    error = MediawikiApi::ApiError.new
-    stub_request(:any, %r{.*wikipedia\.org/w/api\.php.*})
-      .to_raise(error)
-    LegacyCourseImporter.update_all_courses(false, campaign: [798, 800])
-
-    course = create(:legacy_course, id: 519)
-    course.manual_update
-  end
-
-  it 'should seek data for all possible courses' do
-    VCR.use_cassette 'wiki/initial' do
-      expect(Course.all.count).to eq(0)
-      # This should check for course_ids up to 5.
-      LegacyCourseImporter.update_all_courses(true, campaign: [5])
-      # On English Wikipedia, courses 1 and 3 do not exist.
-      expect(Course.all.count).to eq(3)
+    it 'runs without error for multiple courses' do
+      Course.update_all_caches_concurrently
     end
-  end
-
-  it 'should update data for single courses' do
-    VCR.use_cassette 'wiki/manual_course_data' do
-      course = create(:legacy_course, id: 519)
-
-      course.manual_update
-
-      # Check course information
-      expect(course.term).to eq('January 2015')
-
-      # Check articles
-      expect(course.articles.count).to eq(4)
-
-      # Check users
-      expect(course.user_count).to eq(6)
-      expect(User.all.role('student').count).to eq(course.user_count)
-      expect(course.users.role('instructor').first.instructor?(course))
-        .to be true
-
-      # FIXME: This should be tested with a non-legacy course, with a check for
-      # pageviews included. Pageview import has been disabled for legacy courses
-      # for the switch to the new WikiPageviews API.
-    end
-  end
-
-  it 'should update assignments when updating courses' do
-    VCR.use_cassette 'wiki/update_many_courses' do
-      LegacyCourseImporter.update_all_courses(false, campaign: [351, 500, 577])
-
-      expect(Assignment.where(role: Assignment::Roles::ASSIGNED_ROLE).count).to eq(81)
-      # Check that users with multiple assignments are handled properly.
-      user = User.where(username: 'AndrewHamsha').first
-      expect(user.assignments.assigned.count).to eq(2)
-    end
-  end
-
-  it 'should perform ad-hoc course updates' do
-    VCR.use_cassette 'wiki/course_data' do
-      create(:legacy_course, id: '351')
-
-      course = Course.all.first
-      course.update
-      course.update_cache
-
-      expect(course.term).to eq('Summer 2014')
-      expect(course.school).to eq('University of Oklahoma')
-      expect(course.user_count).to eq(12)
-    end
-  end
-
-  it 'should remove users who have been unenrolled from a course' do
-    build(:legacy_course,
-          id: 1,
-          start: Time.zone.today - 1.month,
-          end: Time.zone.today + 1.month,
-          passcode: 'pizza',
-          title: 'Underwater basket-weaving').save
-
-    build(:user,
-          id: 1,
-          username: 'Ragesoss').save
-    build(:user,
-          id: 2,
-          username: 'Ntdb').save
-
-    build(:courses_user,
-          id: 1,
-          course_id: 1,
-          user_id: 1,
-          role: CoursesUsers::Roles::STUDENT_ROLE).save
-    build(:courses_user,
-          id: 2,
-          course_id: 1,
-          user_id: 2,
-          role: CoursesUsers::Roles::STUDENT_ROLE).save
-
-    # Add an article edited by user 2.
-    create(:article,
-           id: 1)
-    create(:revision,
-           user_id: 2,
-           date: Time.zone.today,
-           article_id: 1)
-    create(:articles_course,
-           article_id: 1,
-           course_id: 1)
-
-    course = Course.all.first
-    expect(course.users.count).to eq(2)
-    expect(CoursesUsers.all.count).to eq(2)
-    expect(course.articles.count).to eq(1)
-
-    # Do an import with just user 1, triggering removal of user 2.
-    data = { '1' => {
-      'student' => [{ 'id' => '1', 'username' => 'Ragesoss' }]
-    } }
-    LegacyCourseImporter.import_assignments data
-
-    course = Course.all.first
-    expect(course.users.count).to eq(1)
-    expect(CoursesUsers.all.count).to eq(1)
-    expect(course.articles.count).to eq(0)
   end
 
   it 'should cache revision data for students' do
@@ -251,9 +128,9 @@ describe Course, type: :model do
 
   it 'should update start/end times when changing course type' do
     course = create(:basic_course,
-                   start: DateTime.new(2016, 1, 1, 12, 45, 0),
-                   end: DateTime.new(2016, 1, 10, 15, 30, 0),
-                   title: 'History Class')
+                    start: DateTime.new(2016, 1, 1, 12, 45, 0),
+                    end: DateTime.new(2016, 1, 10, 15, 30, 0),
+                    title: 'History Class')
     expect(course.end).to eq(DateTime.new(2016, 1, 10, 15, 30, 0))
     course = course.becomes!(ClassroomProgramCourse)
     course.save!
@@ -264,6 +141,14 @@ describe Course, type: :model do
     course.end = DateTime.new(2016, 1, 10, 15, 30, 0)
     course.save!
     expect(course.end).to eq(DateTime.new(2016, 1, 10, 15, 30, 0))
+  end
+
+  it 'updates end time to equal start time it the times are invalid' do
+    course = build(:course,
+                   start: DateTime.now,
+                   end: DateTime.now - 2.months)
+    course.save
+    expect(course.end).to eq(course.start)
   end
 
   describe '#url' do
@@ -292,7 +177,11 @@ describe Course, type: :model do
 
   describe 'validation' do
     let(:course) do
-      Course.new(passcode: passcode, type: type, start: '2013-01-01', end: '2013-07-01')
+      Course.new(passcode: passcode,
+                 type: type,
+                 start: '2013-01-01',
+                 end: '2013-07-01',
+                 home_wiki_id: 1)
     end
     subject { course.valid? }
 
@@ -331,8 +220,8 @@ describe Course, type: :model do
 
   describe '#user_count' do
     let!(:course) { create(:course) }
-    let!(:user1)  { create(:test_user) }
-    let!(:user2)  { create(:test_user) }
+    let!(:user1)  { create(:test_user, username: 'user1') }
+    let!(:user2)  { create(:test_user, username: 'user2') }
     let!(:cu1)    { create(:courses_user, course_id: course.id, user_id: user1.id, role: role1) }
     let!(:cu2)    { create(:courses_user, course_id: course.id, user_id: user2.id, role: role2) }
     let!(:cu3)    { create(:courses_user, course_id: course.id, user_id: user3, role: role3) }
@@ -355,8 +244,8 @@ describe Course, type: :model do
       let(:role2) { CoursesUsers::Roles::STUDENT_ROLE }
       let(:user3) { user1.id }
       let(:role3) { CoursesUsers::Roles::INSTRUCTOR_ROLE }
-      it 'returns 1' do
-        expect(subject).to eq(1)
+      it 'returns 2' do
+        expect(subject).to eq(2)
       end
     end
   end
@@ -409,9 +298,9 @@ describe Course, type: :model do
     before do
       create(:user, id: 1, trained: 0)
       create(:courses_user, user_id: 1, course_id: 1, role: CoursesUsers::Roles::STUDENT_ROLE)
-      create(:user, id: 2, trained: 1)
+      create(:user, username: 'user2', id: 2, trained: 1)
       create(:courses_user, user_id: 2, course_id: 1, role: CoursesUsers::Roles::STUDENT_ROLE)
-      create(:user, id: 3, trained: 1)
+      create(:user, username: 'user3', id: 3, trained: 1)
       create(:courses_user, user_id: 3, course_id: 1, role: CoursesUsers::Roles::STUDENT_ROLE)
     end
     context 'after the introduction of in-dashboard training modules' do
@@ -576,13 +465,25 @@ describe Course, type: :model do
       expect(Course.last.class).to eq(ClassroomProgramCourse)
     end
 
-    it 'implements #string_prefix and #wiki_edits_enabled? for every course type' do
+    it 'implements required methods for every course type' do
       Course::COURSE_TYPES.each do |type|
-        create(:course, type: type)
+        create(:course, type: type, slug: "foo/#{type}")
         course = Course.last
         expect(course.type).to eq(type)
+        # #string_prefix
         expect(course.string_prefix).to be_a(String)
+        # #wiki_edits_enabled?
         expect(course.wiki_edits_enabled?).to be_in([true, false])
+        # #wiki_course_page_enabled?
+        expect(course.wiki_course_page_enabled?).to be_in([true, false])
+        # #multiple_roles_allowed?
+        expect(course.multiple_roles_allowed?).to be_in([true, false])
+        # #passcode_required?
+        expect(course.passcode_required?).to be_in([true, false])
+        # #use_start_and_end_times
+        expect(course.use_start_and_end_times).to be_in([true, false])
+        # wiki_title
+        expect(course).to respond_to(:wiki_title)
       end
     end
   end

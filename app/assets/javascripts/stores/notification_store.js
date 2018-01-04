@@ -3,6 +3,8 @@
 
 import McFly from 'mcfly';
 const Flux = new McFly();
+import _ from 'lodash';
+
 import CourseStore from './course_store.js';
 import ServerActions from '../actions/server_actions.js';
 
@@ -16,7 +18,7 @@ const _notifications = [];
 //----------------------------------------
 
 const addNotification = function (notification) {
-  _notifications.push(notification);
+  _notifications.push({ store: 'flux', ...notification });
 };
 
 const removeNotification = function (notification) {
@@ -85,6 +87,15 @@ const NotificationStore = Flux.createStore(storeMethods, (payload) => {
       if (data.readyState === 0) { return; }
 
       handleErrorNotification(data, payload.actionType);
+      NotificationStore.emitChange();
+      break;
+    case 'NEEDS_UPDATE':
+      addNotification({
+        message: payload.data.result,
+        closable: true,
+        type: 'success'
+      });
+
       NotificationStore.emitChange();
       break;
     default:
